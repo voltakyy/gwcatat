@@ -49,12 +49,24 @@ Aturan pakai:
 
 ## 2. Tipografi (Ketat)
 
-- **Satu-satunya font: Manrope** (`400, 500, 600, 700, 800`).
-  Dilarang menambah font display/serif/mono. Angka memakai Manrope juga
-  (tabular via `font-variant-numeric: tabular-nums` untuk kolom nominal).
+Tiga peran, tiga font — tidak boleh tambah lagi:
+
+```css
+--font-display: 'Montserrat', 'Manrope', system-ui, sans-serif;
+--font-body:    'Manrope', system-ui, -apple-system, sans-serif;
+--font-numeric: 'JetBrains Mono', ui-monospace, monospace;
+```
+
 - Sumber font tunggal:
-  `https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap`
-- Fallback: `'Manrope', system-ui, -apple-system, sans-serif`.
+  `Montserrat 600;700;800 + Manrope 200..800 + JetBrains Mono 500;600;700`
+  via Google Fonts.
+- **Display = Montserrat** — judul halaman, judul kartu/seksi/modal,
+  nama brand, banner. Tegas, hanya untuk teks pendek.
+- **Body = Manrope** — isi, label, tombol, input teks, legend grafik.
+- **Numeric = JetBrains Mono** — SEMUA angka finansial (nominal transaksi,
+  ringkasan, pilar, statistik, input Rp, sumbu grafik Rp, rumus, badge
+  status, hint keyboard). Monospace memberi kesan data teknis, bukan prosa.
+  Trade-off yang diterima: kolom angka sedikit lebih lebar.
 
 Skala ukuran (tidak boleh dilebarkan sembarangan):
 

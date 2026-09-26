@@ -376,7 +376,7 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } },
+            legend: { position: 'bottom', labels: { font: { family: 'Manrope', size: 12 } } },
             tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}` } }
           },
           cutout: '68%',
@@ -418,11 +418,11 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+            legend: { position: 'top', labels: { font: { family: 'Manrope', size: 11 } } },
             tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}` } }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 11 } } },
+            y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } },
             x: { ticks: { font: { family: 'Manrope', size: 11 } } }
           },
           animation: { duration: 300 }
@@ -453,7 +453,7 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${fmtRp(ctx.raw)}` } } },
-          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 11 } } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } } },
           animation: { duration: 300 }
         }
       });
@@ -482,7 +482,7 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${fmtRp(ctx.raw)}` } } },
-          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 11 } } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } } },
           animation: { duration: 300 }
         }
       });
@@ -655,7 +655,7 @@ function renderSavings(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } },
+            legend: { position: 'bottom', labels: { font: { family: 'Manrope', size: 11 } } },
             tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}` } }
           },
           cutout: '62%',
@@ -1067,11 +1067,11 @@ function updateReport(tx) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+              legend: { position: 'top', labels: { font: { family: 'Manrope', size: 11 } } },
               tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}` } }
             },
             scales: {
-              y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 11 } } },
+              y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } },
               x: { ticks: { font: { family: 'Manrope', size: 11 } } }
             },
             animation: { duration: 300 }

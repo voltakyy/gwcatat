@@ -2,7 +2,7 @@
    GWCATAT — Global Styles & Sidebar Layout
    ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Manrope:wght@200..800&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -25,10 +25,13 @@
   --shadow:     0 1px 3px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.04);
   --shadow-lg:  0 12px 36px rgba(0,0,0,0.08);
   --sidebar-w:  260px;
+  --font-display: 'Montserrat', 'Manrope', system-ui, sans-serif;
+  --font-body:    'Manrope', system-ui, -apple-system, sans-serif;
+  --font-numeric: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 body {
-  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -90,7 +93,7 @@ body {
   box-shadow: 0 4px 12px rgba(38,70,83,0.25);
 }
 .sidebar-brand-name {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 20px;
   font-weight: 800;
   color: var(--teal);
@@ -166,7 +169,7 @@ body {
 }
 
 .kbd-hint {
-  font-family: 'Manrope', monospace;
+  font-family: var(--font-numeric);
   font-size: 10px;
   font-weight: 700;
   padding: 2px 6px;
@@ -293,7 +296,7 @@ body {
   justify-content: center;
 }
 .page-badge-title {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 17px;
   font-weight: 800;
   color: var(--teal);
@@ -418,7 +421,7 @@ body {
   letter-spacing: .04em;
 }
 .summary-card .value {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.5px;
@@ -519,7 +522,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 600;
 }
@@ -540,7 +543,7 @@ body {
   right: 0;
   background: linear-gradient(180deg, rgba(90,147,103,0.6), #5a9367);
   transition: height .7s ease;
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -584,7 +587,7 @@ body {
   box-shadow: 0 4px 12px rgba(38,70,83,0.2);
 }
 .level-box .lv {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 18px;
   font-weight: 700;
 }
@@ -677,7 +680,7 @@ body {
   margin-top: 2px;
 }
 .tx-amount {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   font-weight: 700;
 }
@@ -731,7 +734,7 @@ body {
   pointer-events: none;
 }
 .savings-banner-title {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 18px;
   font-weight: 800;
   color: var(--gold);
@@ -815,7 +818,7 @@ body {
 .pillar-icon.invest { background: rgba(90,147,103,0.15); color: var(--green); }
 .pillar-name { font-size: 13px; font-weight: 700; color: var(--teal); }
 .pillar-amount {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 20px;
   font-weight: 700;
   color: var(--text);
@@ -847,7 +850,7 @@ body {
   border: 1.5px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
@@ -881,7 +884,7 @@ body {
   text-transform: uppercase;
 }
 .rstat .rv {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.3px;
@@ -1011,7 +1014,7 @@ body {
   background: var(--surface);
 }
 .form-input.mono {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -1046,7 +1049,7 @@ body {
   border-bottom: 1px dashed var(--border);
 }
 .health-stat-value {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 34px;
   font-weight: 700;
   color: var(--teal);
@@ -1078,7 +1081,7 @@ body {
   gap: 6px;
 }
 .health-formula {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
   color: var(--teal);
@@ -1162,4 +1165,34 @@ body {
   .app-main {
     padding: 16px 14px 70px;
   }
+}
+
+/* =============================================
+   PERAN FONT (DESIGN.md §2) — ditaruh paling akhir
+   agar menang atas deklarasi per-selektor di atas
+   ============================================= */
+
+/* Display — Montserrat: judul & brand */
+.sidebar-brand-name,
+.page-badge-title,
+.savings-banner-title,
+.card-title,
+.section-title,
+.modal-title {
+  font-family: var(--font-display);
+}
+
+/* Numeric — JetBrains Mono: angka finansial */
+.summary-card .value,
+.ring-inner,
+.level-box .lv,
+.tx-amount,
+.pillar-amount,
+.allowance-bar input,
+.savings-goal-bar input,
+.rstat .rv,
+.form-input.mono,
+.health-stat-value,
+.health-formula {
+  font-family: var(--font-numeric);
 }
