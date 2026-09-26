@@ -2,7 +2,7 @@
    GWCATAT — Global Styles & Sidebar Layout
    ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -28,7 +28,7 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -80,7 +80,7 @@ body {
   box-shadow: 0 4px 12px rgba(38,70,83,0.25);
 }
 .sidebar-brand-name {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 20px;
   font-weight: 800;
   color: var(--teal);
@@ -283,7 +283,7 @@ body {
   justify-content: center;
 }
 .page-badge-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 17px;
   font-weight: 800;
   color: var(--teal);
@@ -721,7 +721,7 @@ body {
   pointer-events: none;
 }
 .savings-banner-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--gold);
