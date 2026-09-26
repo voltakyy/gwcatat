@@ -35,6 +35,16 @@ body {
   min-height: 100vh;
 }
 
+/* Angka tabular agar kolom nominal sejajar (DESIGN.md §2) */
+.tx-amount,
+.pillar-amount,
+.summary-card .value,
+.rstat .rv,
+.health-stat-value,
+.form-input.mono {
+  font-variant-numeric: tabular-nums;
+}
+
 /* =============================================
    LAYOUT WITH LEFT SIDEBAR
    ============================================= */
