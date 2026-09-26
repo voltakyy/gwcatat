@@ -2,20 +2,45 @@
 // GWCATAT — app.js (Arsitektur 5 Halaman & Shortcut Lengkap)
 // =============================================================
 
-// ===== CEK SESSION =====
-const session = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
-if (!session) {
-  window.location.href = 'login.html';
+// ===== SESI SUPABASE (async, dicek di boot) =====
+// Sesi lama (gwcatat_session) tidak dipakai lagi.
+let sbUser = null;
+
+// Kunci cache lokal; dipersempit per-user setelah sesi diketahui.
+let userStorageKey = 'gwcatat_transactions';
+let allowanceKey = 'gwcatat_allowance';
+let savingsGoalKey = 'gwcatat_savings_goal';
+
+function isUuid(v) {
+  return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 }
 
-// User-specific storage key agar data terisolasi per akun
-const userStorageKey = session && session.email
-  ? `gwcatat_${session.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`
-  : 'gwcatat_transactions';
+function rowToLocal(r) {
+  return {
+    id: r.id,
+    date: r.date,
+    description: r.description || '',
+    amount: Number(r.amount) || 0,
+    type: r.type,
+    category: r.category || 'lainnya'
+  };
+}
+
+function localToRow(t) {
+  return {
+    user_id: sbUser.id,
+    date: t.date,
+    type: t.type,
+    category: t.category || 'lainnya',
+    amount: Number(t.amount) || 0,
+    description: t.description || ''
+  };
+}
 
 // ===== LOGOUT =====
-document.getElementById('logoutBtn')?.addEventListener('click', () => {
-  sessionStorage.removeItem('gwcatat_session')
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  try { await window.sb?.auth.signOut(); } catch (e) {}
+  try { sessionStorage.clear(); } catch (e) {}
   window.location.href = 'login.html'
 })
 
@@ -244,7 +269,7 @@ if (modalOverlay) {
   });
 }
 
-function submitTransaction() {
+async function submitTransaction() {
   try {
     const date = modalDate ? modalDate.value : null;
     const desc = modalDesc ? modalDesc.value.trim() : '';
@@ -258,16 +283,28 @@ function submitTransaction() {
       return;
     }
 
-    transactions.push({
+    const tx = {
       id: uid(),
       date,
       description: finalDesc,
       amount,
       type: modalMode,
       category: cat
-    });
+    };
+    transactions.push(tx);
 
     saveData();
+
+    // Sinkron ke cloud (optimistis); tempel id uuid bila berhasil
+    if (sbUser && window.sb) {
+      try {
+        const { data, error } = await window.sb.from('transactions').insert(localToRow(tx)).select().single();
+        if (!error && data) {
+          tx.id = data.id;
+          saveData();
+        }
+      } catch (e) { console.warn('insert cloud gagal, tersimpan lokal:', e); }
+    }
 
     // Sinkronkan currentMonth ke bulan transaksi
     const txMonth = date.slice(0, 7);
@@ -515,11 +552,18 @@ function txItemHTML(t) {
 
 function bindDeleteButtons() {
   document.querySelectorAll('.tx-del').forEach(btn => {
-    btn.onclick = function () {
+      btn.onclick = async function () {
       if (!confirm('Hapus transaksi ini?')) return;
-      transactions = transactions.filter(t => t.id !== this.dataset.id);
+      const delId = this.dataset.id;
+      transactions = transactions.filter(t => t.id !== delId);
       saveData();
       renderAll();
+      if (sbUser && window.sb && isUuid(delId)) {
+        try {
+          const { error } = await window.sb.from('transactions').delete().eq('id', delId);
+          if (error) throw error;
+        } catch (e) { console.warn('hapus cloud gagal:', e); }
+      }
     };
   });
 }
@@ -1158,26 +1202,77 @@ document.getElementById('nextMonth')?.addEventListener('click', () => {
 });
 
 // ===== 11. SAVINGS GOAL & ALLOWANCE EVENT =====
+let settingsSaveTimer = null;
+async function persistSettingsCloud() {
+  if (!sbUser || !window.sb) return;
+  try {
+    const { error } = await window.sb.from('settings').upsert({
+      user_id: sbUser.id,
+      allowance: parseRibuan(document.getElementById('allowanceInput')?.value),
+      savings_goal: parseRibuan(document.getElementById('savingsGoalInput')?.value)
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
+  } catch (e) { console.warn('simpan settings cloud gagal:', e); }
+}
+function queueSettingsSave() {
+  clearTimeout(settingsSaveTimer);
+  settingsSaveTimer = setTimeout(persistSettingsCloud, 800);
+}
 const allowanceInput = document.getElementById('allowanceInput');
 if (allowanceInput) {
   formatAmountInput(allowanceInput);
-  allowanceInput.value = localStorage.getItem('gwcatat_allowance') || '';
+  allowanceInput.value = localStorage.getItem(allowanceKey) || '';
   allowanceInput.addEventListener('input', () => {
-    localStorage.setItem('gwcatat_allowance', allowanceInput.value);
+    localStorage.setItem(allowanceKey, allowanceInput.value);
     const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
     renderAllowance(monthTx);
+    queueSettingsSave();
   });
 }
 
 const savingsGoalInput = document.getElementById('savingsGoalInput');
 if (savingsGoalInput) {
   formatAmountInput(savingsGoalInput);
-  savingsGoalInput.value = localStorage.getItem('gwcatat_savings_goal') || '';
+  savingsGoalInput.value = localStorage.getItem(savingsGoalKey) || '';
   savingsGoalInput.addEventListener('input', () => {
-    localStorage.setItem('gwcatat_savings_goal', savingsGoalInput.value);
+    localStorage.setItem(savingsGoalKey, savingsGoalInput.value);
     const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
     renderSavings(monthTx);
+    queueSettingsSave();
   });
+}
+
+// Tarik data cloud (transaksi + settings), migrasi cache lokal lawas ke atas.
+async function pullCloud() {
+  if (!sbUser || !window.sb) return;
+  try {
+    const { data, error } = await window.sb.from('transactions').select('*').order('date', { ascending: false });
+    if (error) throw error;
+    const cloud = (data || []).map(rowToLocal);
+    const cloudIds = new Set(cloud.map(t => t.id));
+    const localOnly = transactions.filter(t => !isUuid(t.id) && !cloudIds.has(t.id));
+    if (localOnly.length) {
+      try {
+        const { data: ins, error: e2 } = await window.sb.from('transactions').insert(localOnly.map(localToRow)).select();
+        if (!e2 && ins) ins.forEach(r => cloud.push(rowToLocal(r)));
+      } catch (e) { console.warn('migrasi lokal ke cloud gagal:', e); }
+    }
+    transactions = cloud;
+    saveData();
+  } catch (e) { console.warn('pull transaksi cloud gagal, pakai cache lokal:', e); }
+
+  try {
+    const { data: s, error } = await window.sb.from('settings').select('*').eq('user_id', sbUser.id).maybeSingle();
+    if (error) throw error;
+    if (s) {
+      if (allowanceInput) allowanceInput.value = s.allowance ? Number(s.allowance).toLocaleString('id-ID') : '';
+      if (savingsGoalInput) savingsGoalInput.value = s.savings_goal ? Number(s.savings_goal).toLocaleString('id-ID') : '';
+      localStorage.setItem(allowanceKey, allowanceInput?.value || '');
+      localStorage.setItem(savingsGoalKey, savingsGoalInput?.value || '');
+    } else {
+      await persistSettingsCloud();
+    }
+  } catch (e) { console.warn('pull settings cloud gagal:', e); }
 }
 
 // ===== 12. SHORTCUTS MODAL =====
@@ -1272,17 +1367,32 @@ importFileInput?.addEventListener('change', (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     try {
       const imported = JSON.parse(event.target.result);
       if (Array.isArray(imported)) {
         if (confirm(`Impor ${imported.length} transaksi? Data saat ini akan digabungkan.`)) {
           const existingIds = new Set(transactions.map(t => t.id));
-          imported.forEach(t => {
-            if (!existingIds.has(t.id)) transactions.push(t);
-          });
+          const fresh = imported.filter(t => t && !existingIds.has(t.id));
+          fresh.forEach(t => transactions.push(t));
           saveData();
           renderAll();
+          if (sbUser && window.sb && fresh.length) {
+            try {
+              const { data, error } = await window.sb.from('transactions').insert(fresh.map(localToRow)).select();
+              if (!error && data) {
+                const byDesc = new Map();
+                data.forEach(r => byDesc.set(r.description + '|' + r.date + '|' + String(r.amount), r.id));
+                transactions.forEach(t => {
+                  if (!isUuid(t.id)) {
+                    const nid = byDesc.get(t.description + '|' + t.date + '|' + String(t.amount));
+                    if (nid) t.id = nid;
+                  }
+                });
+                saveData();
+              }
+            } catch (e) { console.warn('impor ke cloud gagal:', e); }
+          }
           alert('Data transaksi berhasil diimpor!');
         }
       } else {
@@ -1326,4 +1436,45 @@ function init() {
   document.getElementById('cardLiteracy')?.addEventListener('click', () => openHealthModal('literacy'));
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// ===== 17b. BOOT (sesi Supabase dulu, baru render) =====
+async function boot() {
+  if (!window.sb) {
+    alert('Gagal memuat layanan login. Periksa koneksi lalu muat ulang.');
+    return;
+  }
+  let session = null;
+  try {
+    const { data, error } = await window.sb.auth.getSession();
+    if (error) throw error;
+    session = data.session;
+  } catch (e) { console.warn('cek sesi gagal:', e); }
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  sbUser = session.user;
+  const tag = sbUser.id.replace(/[^a-zA-Z0-9]/g, '_');
+  userStorageKey = `gwcatat_${tag}_transactions`;
+  allowanceKey = `gwcatat_${tag}_allowance`;
+  savingsGoalKey = `gwcatat_${tag}_savings_goal`;
+
+  // Migrasi sekali: gabungkan cache era login lama (per-email & global)
+  // agar ikut terunggah ke cloud di pullCloud().
+  try {
+    const ids = new Set(transactions.map(t => t.id));
+    const legacyKeys = ['gwcatat_transactions'];
+    if (sbUser.email) legacyKeys.push(`gwcatat_${sbUser.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`);
+    legacyKeys.forEach(k => {
+      try {
+        (JSON.parse(localStorage.getItem(k) || '[]') || []).forEach(t => {
+          if (t && t.id && !ids.has(t.id)) { ids.add(t.id); transactions.push(t); }
+        });
+      } catch (e) {}
+    });
+  } catch (e) {}
+
+  await pullCloud();
+  init();
+}
+
+document.addEventListener('DOMContentLoaded', boot);

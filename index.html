@@ -5,14 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>gwcatat — Catatan & Manajemen Keuangan Pribadi</title>
   <meta name="description" content="Aplikasi pencatatan keuangan pribadi dengan indikator kesehatan finansial dan manajemen tabungan cerdas." />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-client.js"></script>
   <script>
+    // Penjaga awal: alihkan ke login bila tidak ada sesi Supabase.
+    // (boot app.js memverifikasi ulang setelah DOM siap.)
     try {
-      const appSession = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
-      if (!appSession || !appSession.email) window.location.replace('login.html');
-    } catch (error) {
-      sessionStorage.removeItem('gwcatat_session');
-      window.location.replace('login.html');
-    }
+      if (window.sb) {
+        window.sb.auth.getSession().then(function (res) {
+          if (!res || !res.data || !res.data.session) window.location.replace('login.html');
+        });
+      }
+    } catch (error) { /* biarkan boot app.js yang memutuskan */ }
   </script>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
