@@ -2,7 +2,7 @@
    GWCATAT — Global Styles & Sidebar Layout
    ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Manrope:wght@200..800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Manrope:wght@200..800&family=Inter:wght@500;600;700;800&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -27,7 +27,7 @@
   --sidebar-w:  260px;
   --font-display: 'Montserrat', 'Manrope', system-ui, sans-serif;
   --font-body:    'Manrope', system-ui, -apple-system, sans-serif;
-  --font-numeric: 'JetBrains Mono', ui-monospace, monospace;
+  --font-numeric: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
@@ -1182,7 +1182,9 @@ body {
   font-family: var(--font-display);
 }
 
-/* Numeric — JetBrains Mono: angka finansial */
+/* Numeric — Inter tabular: angka finansial.
+   Inter default nol-nya oval polos (tanpa titik/silangan).
+   "tnum" mengunci lebar digit agar kolom Rp sejajar. */
 .summary-card .value,
 .ring-inner,
 .level-box .lv,
@@ -1195,4 +1197,5 @@ body {
 .health-stat-value,
 .health-formula {
   font-family: var(--font-numeric);
+  font-feature-settings: "tnum" 1;
 }

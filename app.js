@@ -422,7 +422,7 @@ function renderCharts(tx) {
             tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}` } }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } },
+            y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Inter', size: 11 } } },
             x: { ticks: { font: { family: 'Manrope', size: 11 } } }
           },
           animation: { duration: 300 }
@@ -453,7 +453,7 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${fmtRp(ctx.raw)}` } } },
-          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Inter', size: 11 } } } },
           animation: { duration: 300 }
         }
       });
@@ -482,7 +482,7 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${fmtRp(ctx.raw)}` } } },
-          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Inter', size: 11 } } } },
           animation: { duration: 300 }
         }
       });
@@ -1071,7 +1071,7 @@ function updateReport(tx) {
               tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}` } }
             },
             scales: {
-              y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'JetBrains Mono', size: 11 } } },
+              y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Inter', size: 11 } } },
               x: { ticks: { font: { family: 'Manrope', size: 11 } } }
             },
             animation: { duration: 300 }
