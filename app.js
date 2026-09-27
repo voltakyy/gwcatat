@@ -909,7 +909,7 @@ function renderHealthIndicators(tx) {
 // ===== POPUP EDUKASI FINANSIAL =====
 const popInfo = {
   savings: {
-    title: "1. Rasio Tabungan (Savings Ratio)",
+    title: "Rasio Tabungan (Savings Ratio)",
     getVal: (r) => `${Math.round(r.savingsRatio)}%`,
     badgeText: (r) => r.sv.label,
     badgeColor: (r) => r.sv.color,
@@ -924,7 +924,7 @@ const popInfo = {
     tab: 'tabungan', category: 'tabungan', btnText: "Ke Halaman Tabungan"
   },
   lifestyle: {
-    title: "2. Rasio Gaya Hidup (Lifestyle Ratio)",
+    title: "Rasio Gaya Hidup (Lifestyle Ratio)",
     getVal: (r) => `${Math.round(r.lifestyleRatio)}%`,
     badgeText: (r) => r.ls.label,
     badgeColor: (r) => r.ls.color,
@@ -939,7 +939,7 @@ const popInfo = {
     tab: 'pengeluaran', category: 'keinginan', btnText: "Evaluasi Pengeluaran"
   },
   liquidity: {
-    title: "3. Rasio Likuiditas (Liquidity Ratio)",
+    title: "Rasio Likuiditas (Liquidity Ratio)",
     getVal: (r) => isFinite(r.liquidityMonths) ? (r.liquidityMonths >= 10 ? '9.9+×' : `${r.liquidityMonths.toFixed(1)}×`) : '∞',
     badgeText: (r) => r.liq.label,
     badgeColor: (r) => r.liq.color,
@@ -954,7 +954,7 @@ const popInfo = {
     tab: 'beranda', section: 'summary-grid', btnText: "Lihat Saldo Kas di Beranda"
   },
   emergency: {
-    title: "4. Dana Darurat (Emergency Fund)",
+    title: "Dana Darurat (Emergency Fund)",
     getVal: (r) => `${Math.round(r.emergencyRatio)}%`,
     badgeText: (r) => r.em.label,
     badgeColor: (r) => r.em.color,
@@ -969,7 +969,7 @@ const popInfo = {
     tab: 'tabungan', category: 'darurat', btnText: "Buka Pos Dana Darurat"
   },
   literacy: {
-    title: "5. Skor Literasi Keuangan & Gamifikasi",
+    title: "Skor Literasi Keuangan & Gamifikasi",
     getVal: (r) => `Lv.${r.levelIdx + 1} · ${r.levels[r.levelIdx]} (${r.literacyScore}/100)`,
     badgeText: (r) => `Lv.${r.levelIdx + 1}`,
     badgeColor: (r) => r.levelIdx >= 3 ? "#5a9367" : r.levelIdx >= 1 ? "#C89B3C" : "#c0604a",
