@@ -615,6 +615,13 @@ body {
 }
 
 /* ---- CALENDAR ---- */
+.cal-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: left;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
