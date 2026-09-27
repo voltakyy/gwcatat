@@ -1596,7 +1596,7 @@ let tutToken = 0;
 
 function tutEls() {
   return {
-    overlay: document.getElementById('tutOverlay'),
+    frame: document.getElementById('tutFrame'),
     tip: document.getElementById('tutTip'),
     progress: document.getElementById('tutProgress'),
     title: document.getElementById('tutTitle'),
@@ -1612,8 +1612,8 @@ function startTutorial(sessionId) {
   if (!s) return;
   closeMobileSidebar();
   tutState = { s, i: 0 };
-  const { overlay, tip } = tutEls();
-  if (overlay) overlay.hidden = false;
+  const { frame, tip } = tutEls();
+  if (frame) frame.hidden = false;
   if (tip) tip.hidden = false;
   document.addEventListener('keydown', tutEscape, true);
   showTutStep(0);
@@ -1626,8 +1626,8 @@ function tutEscape(e) {
 function endTutorial() {
   tutToken++;
   tutState = null;
-  const { overlay, tip } = tutEls();
-  if (overlay) { overlay.hidden = true; overlay.style.webkitMaskImage = ''; overlay.style.maskImage = ''; }
+  const { frame, tip } = tutEls();
+  if (frame) frame.hidden = true;
   if (tip) tip.hidden = true;
   document.removeEventListener('keydown', tutEscape, true);
   closeMobileSidebar();
@@ -1669,14 +1669,28 @@ function showTutStep(i) {
       if (!r || (r.width === 0 && r.height === 0)) { tutAdvance(1); return; }
 
       const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const rad = Math.max(44, Math.max(r.width, r.height) / 2 + 28);
 
-      const { overlay, tip, progress, title, text, prev, next } = tutEls();
-      const mask = `radial-gradient(circle ${rad}px at ${cx}px ${cy}px, transparent ${rad}px, black ${rad + 2}px)`;
-      if (overlay) {
-        overlay.style.webkitMaskImage = mask;
-        overlay.style.maskImage = mask;
+      // Bingkai menjiplak target: posisi + ukuran + radius sudut sama.
+      const pad = 10;
+      let rad = 12;
+      try {
+        const cs = window.getComputedStyle(el).borderRadius || '';
+        const m = cs.match(/[\d.]+/);
+        if (m) rad = parseFloat(m[0]) + pad;
+      } catch (e) {}
+      const fx = Math.max(4, r.left - pad);
+      const fy = Math.max(4, r.top - pad);
+      const fw = Math.min(window.innerWidth - fx - 4, r.width + pad * 2);
+      const fh = r.height + pad * 2;
+
+      const { frame, tip, progress, title, text, prev, next } = tutEls();
+      if (frame) {
+        frame.hidden = false;
+        frame.style.left = fx + 'px';
+        frame.style.top = fy + 'px';
+        frame.style.width = fw + 'px';
+        frame.style.height = fh + 'px';
+        frame.style.borderRadius = rad + 'px';
       }
 
       if (tip) {
@@ -1689,7 +1703,7 @@ function showTutStep(i) {
         const tipW = Math.min(320, window.innerWidth - 32);
         const tipH = tip.offsetHeight || 200;
         let left = Math.max(12, Math.min(cx - tipW / 2, window.innerWidth - tipW - 12));
-        let top = r.bottom + rad * 0 + 16;
+        let top = r.bottom + 16;
         if (top + tipH > window.innerHeight - 12) top = Math.max(12, r.top - tipH - 16);
         tip.style.left = left + 'px';
         tip.style.top = Math.max(12, top) + 'px';

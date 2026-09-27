@@ -1397,12 +1397,14 @@ body {
 }
 .tut-start:hover { opacity: .9; transform: translateY(-1px); }
 
-/* Overlay gelap 25% + lubang lingkaran (via mask dari JS) */
-.tut-overlay {
+/* Bingkai sorot: menjiplak bentuk target, bayangan raksasa jadi overlay 25% */
+.tut-frame {
   position: fixed;
-  inset: 0;
   z-index: 400;
-  background: rgba(20, 30, 35, 0.25);
+  background: transparent;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 9999px rgba(20, 30, 35, 0.25);
+  pointer-events: none;
 }
 
 /* Kartu langkah tutorial */
