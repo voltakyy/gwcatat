@@ -788,7 +788,13 @@ function renderCalendar(tx) {
       const tIn = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
       const tOut = dayTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
       const sumEl = document.getElementById('calendarSummary');
-      if (sumEl) sumEl.textContent = `${date} — Masuk: ${fmtRp(tIn)} · Keluar: ${fmtRp(tOut)} (${dayTx.length} transaksi)`;
+      if (sumEl) {
+        sumEl.textContent = `${date} — Masuk: ${fmtRp(tIn)} · Keluar: ${fmtRp(tOut)} (${dayTx.length} transaksi)`;
+        // Kilatan masuk sekali agar user notice, lalu diam permanen.
+        sumEl.classList.remove('flash');
+        void sumEl.offsetWidth;
+        sumEl.classList.add('flash');
+      }
     });
   });
 }
