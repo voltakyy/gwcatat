@@ -966,7 +966,7 @@ const popInfo = {
     title: "5. Skor Literasi Keuangan & Gamifikasi",
     getVal: (r) => `Lv.${r.levelIdx + 1} · ${r.levels[r.levelIdx]} (${r.literacyScore}/100)`,
     badgeText: (r) => `Lv.${r.levelIdx + 1}`,
-    badgeColor: "#5a9367",
+    badgeColor: (r) => r.levelIdx >= 3 ? "#5a9367" : r.levelIdx >= 1 ? "#C89B3C" : "#c0604a",
     desc: "Skor kesehatan finansial menyeluruh yang menilai porsi tabungan, pengendalian belanja, rasio likuiditas, dan konsistensi dana darurat.",
     formula: "Kombinasi Tertimbang: 35% Tabungan + 30% Gaya Hidup + 20% Likuiditas + 15% Darurat",
     thresholds: [
@@ -990,7 +990,9 @@ function openHealthModal(id) {
   if (titleEl) titleEl.textContent = info.title;
 
   const bText  = currentCalculatedHealth ? info.badgeText(currentCalculatedHealth) : '-';
-  const bColor = currentCalculatedHealth ? info.badgeColor(currentCalculatedHealth) : '#5a9367';
+  const bColor = currentCalculatedHealth
+    ? (typeof info.badgeColor === 'function' ? info.badgeColor(currentCalculatedHealth) : info.badgeColor)
+    : '#5a9367';
   const badgeEl = document.getElementById('healthModalBadge');
   if (badgeEl) {
     badgeEl.textContent = bText;
