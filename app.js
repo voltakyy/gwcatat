@@ -857,8 +857,11 @@ function renderHealthIndicators(tx) {
             : { color: '#c0604a', label: 'Defisit' };
   const tankFill = document.getElementById('tankFill');
   if (tankFill) {
-    const perc = Math.min(100, Math.max(0, (liquidityMonths / 6) * 100));
-    tankFill.style.height = perc + '%';
+    // Kalibrasi: tabung penuh tepat saat status Aman (≥3 bulan), sesuai
+    // ambang badge. Sebelumnya dibagi 6 sehingga tabung tak pernah penuh
+    // meski status sudah Aman — membingungkan user.
+    const perc = Math.min(100, Math.max(0, (liquidityMonths / 3) * 100));
+    tankFill.style.height = (liquidityMonths > 0 ? Math.max(10, perc) : 0) + '%';
     tankFill.textContent = isFinite(liquidityMonths)
       ? (liquidityMonths >= 10 ? '9.9+×' : liquidityMonths.toFixed(1) + '×')
       : '∞';
