@@ -631,9 +631,13 @@ body {
   background: rgba(200,155,60,0.06);
 }
 .cal-day .dnum { font-size: 13px; font-weight: 600; line-height: 1.4; }
-.cal-day .dsums { font-size: 8px; color: var(--muted); }
+.cal-day .dsums { font-size: 8px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.4; }
 .cal-day .dsums .din { color: var(--green); }
 .cal-day .dsums .dout { color: var(--red); }
+/* Titik indikator untuk layar sempit (nominal penuh hanya di desktop) */
+.dsums-dots { display: none; font-size: 9px; line-height: 1.2; letter-spacing: 2px; }
+.dsums-dots .din { color: var(--green); }
+.dsums-dots .dout { color: var(--red); }
 
 /* ---- TRANSACTION LIST ---- */
 .tx-list { display: flex; flex-direction: column; gap: 6px; }
@@ -1183,6 +1187,37 @@ body {
   .app-main {
     padding: 16px 14px 70px;
   }
+
+  /* ---- Perbaikan mobile: cegah halaman jebol (overflow horizontal) ---- */
+  /* Anak grid boleh menyusut mengikuti kolom */
+  .summary-grid > *,
+  .charts-grid > *,
+  .health-grid > * {
+    min-width: 0;
+  }
+  .card {
+    padding: 16px 14px;
+    overflow-wrap: break-word;
+  }
+  .chart-wrap canvas {
+    max-width: 100%;
+  }
+  /* Nominal ringkasan: kecilkan + boleh bungkus agar muat 2 kolom */
+  .summary-grid { gap: 8px; }
+  .summary-card { padding: 12px; }
+  .summary-card .value {
+    font-size: 17px;
+    overflow-wrap: anywhere;
+  }
+  .tx-amount { font-size: 14px; white-space: nowrap; }
+  .tx-del { flex-shrink: 0; }
+
+  /* ---- Kalender mobile: titik ganti nominal, sel lebih ramping ---- */
+  .calendar-grid { gap: 2px; }
+  .cal-day { min-height: 40px; padding: 5px 1px; }
+  .cal-day .dnum { font-size: 12px; }
+  .dsums-amt { display: none; }
+  .dsums-dots { display: block; }
 }
 
 /* =============================================

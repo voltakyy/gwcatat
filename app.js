@@ -776,7 +776,7 @@ function renderCalendar(tx) {
     const has = tIn > 0 || tOut > 0;
     html += `<div class="cal-day ${has ? 'has-tx' : ''}" data-date="${dateStr}">
       <div class="dnum">${d}</div>
-      ${has ? `<div class="dsums">${tIn > 0 ? `<span class="din">+${fmtRp(tIn)}</span>` : ''}${tOut > 0 ? `<span class="dout"> -${fmtRp(tOut)}</span>` : ''}</div>` : ''}
+      ${has ? `<div class="dsums dsums-amt">${tIn > 0 ? `<span class="din">+${fmtRp(tIn)}</span>` : ''}${tOut > 0 ? `<span class="dout"> -${fmtRp(tOut)}</span>` : ''}</div><div class="dsums-dots" aria-hidden="true">${tIn > 0 ? `<span class="din">●</span>` : ''}${tOut > 0 ? `<span class="dout">●</span>` : ''}</div>` : ''}
     </div>`;
   }
   container.innerHTML = html;
