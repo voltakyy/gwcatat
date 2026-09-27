@@ -1243,22 +1243,74 @@ if (savingsGoalInput) {
 }
 
 // Tarik data cloud (transaksi + settings), migrasi cache lokal lawas ke atas.
+// Tanda tangan isi transaksi untuk deteksi duplikat
+function txSignature(t) {
+  return [t.date, t.type, t.category || '', Number(t.amount) || 0, t.description || ''].join('|');
+}
+
 async function pullCloud() {
   if (!sbUser || !window.sb) return;
+  const tag = sbUser.id.replace(/[^a-zA-Z0-9]/g, '_');
+  const migratedKey = `gwcatat_${tag}_migrated`;
+  const legacyKeys = ['gwcatat_transactions'];
+  if (sbUser.email) legacyKeys.push(`gwcatat_${sbUser.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`);
+
+  // Migrasi 1x saja: gabung cache era login lama. Flag mencegah
+  // unggah ulang di boot berikutnya (sumber duplikat).
+  if (localStorage.getItem(migratedKey) !== '1') {
+    try {
+      const ids = new Set(transactions.map(t => t.id));
+      legacyKeys.forEach(k => {
+        try {
+          (JSON.parse(localStorage.getItem(k) || '[]') || []).forEach(t => {
+            if (t && t.id && !ids.has(t.id)) { ids.add(t.id); transactions.push(t); }
+          });
+        } catch (e) {}
+      });
+    } catch (e) {}
+  }
+
   try {
-    const { data, error } = await window.sb.from('transactions').select('*').order('date', { ascending: false });
+    const { data, error } = await window.sb.from('transactions').select('*').order('created_at', { ascending: true });
     if (error) throw error;
-    const cloud = (data || []).map(rowToLocal);
-    const cloudIds = new Set(cloud.map(t => t.id));
-    const localOnly = transactions.filter(t => !isUuid(t.id) && !cloudIds.has(t.id));
-    if (localOnly.length) {
+    let cloud = (data || []).map(rowToLocal);
+
+    // Self-heal: lipat baris yang isinya identik persis (sisa duplikat
+    // migrasi lama), pertahankan yang paling awal, hapus sisanya.
+    const seen = new Map();
+    const dupIds = [];
+    cloud.forEach(t => {
+      const sig = txSignature(t);
+      if (!seen.has(sig)) seen.set(sig, t);
+      else dupIds.push(t.id);
+    });
+    if (dupIds.length) {
       try {
-        const { data: ins, error: e2 } = await window.sb.from('transactions').insert(localOnly.map(localToRow)).select();
-        if (!e2 && ins) ins.forEach(r => cloud.push(rowToLocal(r)));
-      } catch (e) { console.warn('migrasi lokal ke cloud gagal:', e); }
+        const { error: eDel } = await window.sb.from('transactions').delete().in('id', dupIds);
+        if (eDel) throw eDel;
+        const drop = new Set(dupIds);
+        cloud = cloud.filter(t => !drop.has(t.id));
+        console.info(`membersihkan ${dupIds.length} transaksi duplikat di cloud`);
+      } catch (e) { console.warn('bersih duplikat gagal:', e); }
+    }
+
+    const cloudIds = new Set(cloud.map(t => t.id));
+    const cloudSigs = new Set(cloud.map(txSignature));
+    const localOnly = transactions.filter(t => !isUuid(t.id) && !cloudIds.has(t.id) && !cloudSigs.has(txSignature(t)));
+    if (localOnly.length) {
+      const { data: ins, error: e2 } = await window.sb.from('transactions').insert(localOnly.map(localToRow)).select();
+      if (e2) throw e2;
+      (ins || []).forEach(r => cloud.push(rowToLocal(r)));
     }
     transactions = cloud;
     saveData();
+
+    // Migrasi selesai: buang kunci lawas + kunci flag agar tak terulang.
+    if (localStorage.getItem(migratedKey) !== '1') {
+      legacyKeys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+      try { localStorage.setItem(migratedKey, '1'); } catch (e) {}
+      saveData();
+    }
   } catch (e) { console.warn('pull transaksi cloud gagal, pakai cache lokal:', e); }
 
   try {
@@ -1458,21 +1510,8 @@ async function boot() {
   allowanceKey = `gwcatat_${tag}_allowance`;
   savingsGoalKey = `gwcatat_${tag}_savings_goal`;
 
-  // Migrasi sekali: gabungkan cache era login lama (per-email & global)
-  // agar ikut terunggah ke cloud di pullCloud().
-  try {
-    const ids = new Set(transactions.map(t => t.id));
-    const legacyKeys = ['gwcatat_transactions'];
-    if (sbUser.email) legacyKeys.push(`gwcatat_${sbUser.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`);
-    legacyKeys.forEach(k => {
-      try {
-        (JSON.parse(localStorage.getItem(k) || '[]') || []).forEach(t => {
-          if (t && t.id && !ids.has(t.id)) { ids.add(t.id); transactions.push(t); }
-        });
-      } catch (e) {}
-    });
-  } catch (e) {}
-
+  // Migrasi cache lawas + tarik cloud ditangani pullCloud()
+  // (sekali jalan, ber-flag, dan membersihkan duplikat sendiri).
   await pullCloud();
   init();
 }
