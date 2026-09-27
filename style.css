@@ -454,6 +454,8 @@ body {
   gap: 8px;
   transition: transform .12s, opacity .12s;
   user-select: none;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .btn-income:hover, .btn-expense:hover, .btn-savings:hover {
   opacity: .90;
@@ -1236,6 +1238,10 @@ body {
   .app-main {
     padding: 16px 14px 70px;
   }
+
+  /* Tombol aksi: susun vertikal penuh agar selalu fit & center */
+  .quick-actions { grid-template-columns: 1fr; gap: 8px; }
+  .btn-income, .btn-expense, .btn-savings { padding: 13px 16px; }
 
   /* Popup indikator: ringkas tapi tetap lega di layar sempit */
   .health-modal-box { padding: 20px 16px; }
