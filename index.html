@@ -104,6 +104,17 @@
         <kbd class="kbd-hint">Alt+5</kbd>
       </button>
 
+      <!-- 6. Panduan Interaktif (opsional, halaman sendiri) -->
+      <button data-tab="panduan" class="nav-item" title="Shortcut: Alt+6">
+        <div class="nav-item-left">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span>Panduan</span>
+        </div>
+        <kbd class="kbd-hint">Alt+6</kbd>
+      </button>
+
     </nav>
 
     <!-- Sidebar Quick Actions -->
@@ -617,6 +628,95 @@
       </div>
     </div><!-- /tab-laporan -->
 
+    <!-- =============================================================
+         HALAMAN 6: PANDUAN INTERAKTIF (opsional, halaman sendiri —
+         tidak disisipkan ke dashboard)
+         ============================================================= -->
+    <div id="tab-panduan" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 class="section-title">Panduan Interaktif</h2>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Belajar memakai gwcatat langkah demi langkah. Sifatnya opsional — ikuti sesi yang kamu butuhkan saja.</p>
+        </div>
+      </div>
+
+      <!-- Kategori: Pencatatan -->
+      <div class="tut-category">
+        <div class="tut-cat-title"><span>Pencatatan</span></div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 1</span>
+            <div>
+              <h3 class="tut-name">Memasukkan Pendapatan</h3>
+              <p class="tut-desc">Mencatat gaji, uang jajan, bonus, dan hasil usaha lewat tombol Tambah Pendapatan.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="pendapatan">Mulai Tutorial!</button>
+        </div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 2</span>
+            <div>
+              <h3 class="tut-name">Mencatat Pengeluaran</h3>
+              <p class="tut-desc">Mencatat belanja harian, mengatur batas uang jajan, dan melihat riwayat pengeluaran.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="pengeluaran">Mulai Tutorial!</button>
+        </div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 3</span>
+            <div>
+              <h3 class="tut-name">Alokasi Tabungan</h3>
+              <p class="tut-desc">Menyisihkan dana ke tabungan masa depan, memantau total simpanan, dan memasang target.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="tabungan">Mulai Tutorial!</button>
+        </div>
+      </div>
+
+      <!-- Kategori: Pemantauan -->
+      <div class="tut-category">
+        <div class="tut-cat-title"><span>Pemantauan</span></div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 4</span>
+            <div>
+              <h3 class="tut-name">Membaca Indikator Kesehatan</h3>
+              <p class="tut-desc">Memahami 5 skor finansial (tabungan, gaya hidup, likuiditas, darurat, literasi) dan rumusnya.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="kesehatan">Mulai Tutorial!</button>
+        </div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 5</span>
+            <div>
+              <h3 class="tut-name">Kalender Transaksi</h3>
+              <p class="tut-desc">Melihat arus kas per tanggal dan membuka rincian masuk–keluar harian.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="kalender">Mulai Tutorial!</button>
+        </div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 6</span>
+            <div>
+              <h3 class="tut-name">Laporan & Cadangan Data</h3>
+              <p class="tut-desc">Menyaring laporan berkala serta mencadangkan dan memulihkan data transaksi.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="laporan">Mulai Tutorial!</button>
+        </div>
+      </div>
+    </div><!-- /tab-panduan -->
+
   </main>
 </div><!-- /app-layout -->
 
@@ -780,6 +880,21 @@
     <button id="shortcutModalDone" class="modal-submit income" style="background:var(--teal)">
       Saya Mengerti
     </button>
+  </div>
+</div>
+
+<!-- =============================================================
+     TUTORIAL INTERAKTIF: overlay spotlight + kartu langkah
+     ============================================================= -->
+<div id="tutOverlay" class="tut-overlay" hidden></div>
+<div id="tutTip" class="tut-tip" hidden role="dialog" aria-live="polite">
+  <div class="tut-progress" id="tutProgress">Langkah 1/3</div>
+  <h4 class="tut-tip-title" id="tutTitle"></h4>
+  <p class="tut-tip-text" id="tutText"></p>
+  <div class="tut-actions">
+    <button id="tutPrev" class="tut-btn tut-btn-ghost">← Kembali</button>
+    <button id="tutNext" class="tut-btn tut-btn-main">Lanjut →</button>
+    <button id="tutSkip" class="tut-btn tut-btn-ghost" title="Akhiri tutorial">Lewati ✕</button>
   </div>
 </div>
 

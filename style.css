@@ -1319,3 +1319,139 @@ body {
   font-family: var(--font-numeric);
   font-feature-settings: "tnum" 1;
 }
+
+/* =============================================
+   PANDUAN INTERAKTIF (halaman + spotlight)
+   ============================================= */
+
+/* Kategori sesi dengan pembatas garis tipis */
+.tut-category { margin-bottom: 8px; }
+.tut-cat-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin: 6px 0 12px;
+}
+.tut-cat-title::before,
+.tut-cat-title::after {
+  content: "";
+  height: 1px;
+  background: var(--border);
+  flex: 1;
+}
+
+/* Kartu sesi */
+.tut-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.tut-session-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 220px;
+}
+.tut-num {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold);
+  background: var(--gold-lt);
+  border: 1px solid rgba(200,155,60,0.35);
+  border-radius: 8px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.tut-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 2px;
+}
+.tut-desc {
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.tut-start {
+  border: none;
+  cursor: pointer;
+  background: var(--teal);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 11px 18px;
+  transition: opacity .15s, transform .12s;
+  white-space: nowrap;
+}
+.tut-start:hover { opacity: .9; transform: translateY(-1px); }
+
+/* Overlay gelap 25% + lubang lingkaran (via mask dari JS) */
+.tut-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(20, 30, 35, 0.25);
+}
+
+/* Kartu langkah tutorial */
+.tut-tip {
+  position: fixed;
+  z-index: 401;
+  width: min(320px, calc(100vw - 32px));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  padding: 16px;
+}
+.tut-progress {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.tut-tip-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--teal);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+.tut-tip-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+.tut-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.tut-btn {
+  border: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 9px 12px;
+  transition: opacity .15s;
+}
+.tut-btn:hover { opacity: .88; }
+.tut-btn-main { background: var(--teal); color: #fff; flex: 1; }
+.tut-btn-ghost { background: var(--bg); color: var(--teal); border: 1px solid var(--border); }
+#tutPrev[disabled] { opacity: .4; cursor: default; }

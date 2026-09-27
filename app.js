@@ -1153,7 +1153,8 @@ const PAGE_TITLES = {
   pendapatan:  'Pendapatan & Arus Masuk',
   pengeluaran: 'Pengeluaran & Belanja',
   tabungan:    'Manajemen Tabungan & Masa Depan',
-  laporan:     'Laporan Keuangan & Statistik'
+  laporan:     'Laporan Keuangan & Statistik',
+  panduan:     'Panduan Interaktif'
 };
 
 function switchTab(tabName) {
@@ -1378,13 +1379,14 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Alt + Number (1-5) untuk pindah halaman
+  // Alt + Number (1-6) untuk pindah halaman
   if (e.altKey) {
     if (e.key === '1') { e.preventDefault(); switchTab('beranda'); return; }
     if (e.key === '2') { e.preventDefault(); switchTab('pendapatan'); return; }
     if (e.key === '3') { e.preventDefault(); switchTab('pengeluaran'); return; }
     if (e.key === '4') { e.preventDefault(); switchTab('tabungan'); return; }
     if (e.key === '5') { e.preventDefault(); switchTab('laporan'); return; }
+    if (e.key === '6') { e.preventDefault(); switchTab('panduan'); return; }
     if (e.key.toLowerCase() === 'i') { e.preventDefault(); openModal('in'); return; }
     if (e.key.toLowerCase() === 'e') { e.preventDefault(); openModal('out'); return; }
     if (e.key.toLowerCase() === 's') { e.preventDefault(); openModal('out', 'tabungan'); return; }
@@ -1536,3 +1538,176 @@ async function boot() {
 }
 
 document.addEventListener('DOMContentLoaded', boot);
+
+// =============================================================
+// TUTORIAL INTERAKTIF (opsional, dari halaman Panduan)
+// Overlay gelap 25% + lubang sorot lingkaran (CSS mask).
+// =============================================================
+const TUT_SESSIONS = {
+  pendapatan: {
+    num: 1, name: 'Memasukkan Pendapatan',
+    steps: [
+      { tab: 'pendapatan', sel: '#btnIncomeTab', title: 'Tombol Tambah Pendapatan', text: 'Klik tombol ini untuk membuka formulir. Isi tanggal, nominal, dan kategorinya (gaji, bonus, uang jajan), lalu simpan.' },
+      { tab: 'pendapatan', sel: '#tab-pendapatan .chart-wrap', title: 'Grafik Tren Pendapatan', text: 'Grafik ini menunjukkan arus masuk harianmu bulan ini. Makin konsisten mencatat, makin terbaca polanya.' },
+      { tab: 'pendapatan', sel: '#incomeList', title: 'Riwayat Pendapatan', text: 'Semua catatan pendapatan bulan berjalan tampil di sini. Tombol ✕ di tiap baris menghapus catatan.' }
+    ]
+  },
+  pengeluaran: {
+    num: 2, name: 'Mencatat Pengeluaran',
+    steps: [
+      { tab: 'pengeluaran', sel: '#btnExpenseTab', title: 'Tombol Tambah Pengeluaran', text: 'Klik tombol ini setiap habis belanja. Pilih kategori yang jujur (kebutuhan vs keinginan) agar rasio 50/30/20 akurat.' },
+      { tab: 'pengeluaran', sel: '#allowanceInput', title: 'Batas Uang Jajan', text: 'Isi budget belanja bulananmu di sini. Bilah progres di beranda akan memperingatkan saat pemakaian mendekati batas.' },
+      { tab: 'pengeluaran', sel: '#expenseList', title: 'Riwayat Pengeluaran', text: 'Daftar belanja bulan ini. Klik ✕ untuk menghapus catatan yang salah input.' }
+    ]
+  },
+  tabungan: {
+    num: 3, name: 'Alokasi Tabungan',
+    steps: [
+      { tab: 'tabungan', sel: '#btnSavingsTab', title: 'Tombol Alokasi Tabungan', text: 'Sisihkan dana ke Tabungan Masa Depan atau Dana Darurat lewat tombol ini — idealnya 20% dari pendapatan (kaidah 50/30/20).' },
+      { tab: 'tabungan', sel: '#savPageTotalTabungan', title: 'Total Simpanan', text: 'Angka ini adalah akumulasi seluruh alokasimu. Ia terbawa antar bulan, tidak mengulang dari nol.' },
+      { tab: 'tabungan', sel: '#savingsGoalInput', title: 'Target Tabungan', text: 'Pasang target nominal di sini agar progres menabungmu punya garis finis yang jelas.' }
+    ]
+  },
+  kesehatan: {
+    num: 4, name: 'Membaca Indikator Kesehatan',
+    steps: [
+      { tab: 'beranda', sel: '#healthGrid', title: 'Lima Skor Finansial', text: 'Tabungan, gaya hidup, likuiditas, dana darurat, dan literasi — dihitung otomatis dari data kumulatifmu.' },
+      { tab: 'beranda', sel: '#cardSavings', title: 'Klik Kartu untuk Rumus', text: 'Klik kartu mana pun untuk membuka popup berisi rumus, ambang batas, dan referensi pakarnya. Coba klik kartu ini!' }
+    ]
+  },
+  kalender: {
+    num: 5, name: 'Kalender Transaksi',
+    steps: [
+      { tab: 'beranda', sel: '#calendarContainer', title: 'Peta Arus Kas Bulanan', text: 'Tanggal berbingkai emas berarti ada transaksi. Di HP hanya tampil titik hijau/merah agar rapi.' },
+      { tab: 'beranda', sel: '#calendarSummary', title: 'Rincian per Tanggal', text: 'Klik salah satu tanggal, rincian masuk–keluar hari itu muncul di sini dengan sekali kilatan penanda.' }
+    ]
+  },
+  laporan: {
+    num: 6, name: 'Laporan & Cadangan Data',
+    steps: [
+      { tab: 'laporan', sel: '#reportPeriod', title: 'Filter Periode Laporan', text: 'Laporan adalah satu-satunya tempat melihat angka murni sebulan (mingguan/bulanan/tahunan) — tanpa akumulasi.' },
+      { tab: 'laporan', sel: '#exportBtn', title: 'Ekspor & Impor', text: 'Tombol Ekspor mengunduh cadangan JSON semua transaksimu. Impor menggabungkannya kembali. Lakukan rutin!' }
+    ]
+  }
+};
+
+let tutState = null;
+let tutToken = 0;
+
+function tutEls() {
+  return {
+    overlay: document.getElementById('tutOverlay'),
+    tip: document.getElementById('tutTip'),
+    progress: document.getElementById('tutProgress'),
+    title: document.getElementById('tutTitle'),
+    text: document.getElementById('tutText'),
+    prev: document.getElementById('tutPrev'),
+    next: document.getElementById('tutNext'),
+    skip: document.getElementById('tutSkip')
+  };
+}
+
+function startTutorial(sessionId) {
+  const s = TUT_SESSIONS[sessionId];
+  if (!s) return;
+  closeMobileSidebar();
+  tutState = { s, i: 0 };
+  const { overlay, tip } = tutEls();
+  if (overlay) overlay.hidden = false;
+  if (tip) tip.hidden = false;
+  document.addEventListener('keydown', tutEscape, true);
+  showTutStep(0);
+}
+
+function tutEscape(e) {
+  if (e.key === 'Escape') { e.stopPropagation(); endTutorial(); }
+}
+
+function endTutorial() {
+  tutToken++;
+  tutState = null;
+  const { overlay, tip } = tutEls();
+  if (overlay) { overlay.hidden = true; overlay.style.webkitMaskImage = ''; overlay.style.maskImage = ''; }
+  if (tip) tip.hidden = true;
+  document.removeEventListener('keydown', tutEscape, true);
+  closeMobileSidebar();
+  switchTab('panduan');
+  window.scrollTo({ top: 0 });
+}
+
+function showTutStep(i) {
+  if (!tutState) return;
+  const my = ++tutToken;
+  const { s } = tutState;
+  const idx = Math.max(0, Math.min(i, s.steps.length - 1));
+  tutState.i = idx;
+  const step = s.steps[idx];
+
+  if (step.tab) {
+    const active = document.querySelector('.tab-content.active');
+    if (!active || active.id !== 'tab-' + step.tab) switchTab(step.tab);
+  }
+
+  setTimeout(() => {
+    if (!tutState || my !== tutToken) return;
+    let el = null;
+    try { el = document.querySelector(step.sel); } catch (e) {}
+    if (!el) { tutAdvance(1); return; }
+
+    // Elemen di sidebar yang tertutup (HP): buka drawer dulu.
+    const inSidebar = el.closest && el.closest('#appSidebar');
+    if (inSidebar && appSidebar && !appSidebar.classList.contains('open')) {
+      appSidebar.classList.add('open');
+      sidebarBackdrop?.classList.add('open');
+    }
+
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+
+    setTimeout(() => {
+      if (!tutState || my !== tutToken) return;
+      const r = el.getBoundingClientRect();
+      if (!r || (r.width === 0 && r.height === 0)) { tutAdvance(1); return; }
+
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const rad = Math.max(44, Math.max(r.width, r.height) / 2 + 28);
+
+      const { overlay, tip, progress, title, text, prev, next } = tutEls();
+      const mask = `radial-gradient(circle ${rad}px at ${cx}px ${cy}px, transparent ${rad}px, black ${rad + 2}px)`;
+      if (overlay) {
+        overlay.style.webkitMaskImage = mask;
+        overlay.style.maskImage = mask;
+      }
+
+      if (tip) {
+        progress.textContent = `Langkah ${idx + 1}/${s.steps.length} · Sesi ${s.num} ${s.name}`;
+        title.textContent = step.title;
+        text.textContent = step.text;
+        prev.disabled = idx === 0;
+        next.textContent = idx === s.steps.length - 1 ? 'Selesai ✓' : 'Lanjut →';
+        tip.hidden = false;
+        const tipW = Math.min(320, window.innerWidth - 32);
+        const tipH = tip.offsetHeight || 200;
+        let left = Math.max(12, Math.min(cx - tipW / 2, window.innerWidth - tipW - 12));
+        let top = r.bottom + rad * 0 + 16;
+        if (top + tipH > window.innerHeight - 12) top = Math.max(12, r.top - tipH - 16);
+        tip.style.left = left + 'px';
+        tip.style.top = Math.max(12, top) + 'px';
+      }
+    }, 450);
+  }, 120);
+}
+
+function tutAdvance(dir) {
+  if (!tutState) return;
+  const next = tutState.i + dir;
+  if (next >= tutState.s.steps.length) { endTutorial(); return; }
+  showTutStep(next);
+}
+
+document.getElementById('tutPrev')?.addEventListener('click', () => tutAdvance(-1));
+document.getElementById('tutNext')?.addEventListener('click', () => tutAdvance(1));
+document.getElementById('tutSkip')?.addEventListener('click', endTutorial);
+document.querySelectorAll('.tut-start').forEach(btn => {
+  btn.addEventListener('click', () => startTutorial(btn.dataset.session));
+});
