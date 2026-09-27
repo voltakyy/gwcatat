@@ -1043,6 +1043,7 @@ body {
 .health-stat-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
   margin-bottom: 16px;
   padding-bottom: 14px;
@@ -1053,14 +1054,31 @@ body {
   font-size: 34px;
   font-weight: 700;
   color: var(--teal);
-  line-height: 1;
-  flex-shrink: 0;
+  line-height: 1.1;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .health-stat-desc {
+  flex: 1;
+  min-width: 200px;
   font-size: 13px;
   color: var(--text);
   line-height: 1.5;
   font-weight: 500;
+}
+/* Nilai panjang (mis. literasi): susun vertikal agar tidak mendesak deskripsi */
+.health-stat-header.long {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.health-stat-header.long .health-stat-value {
+  font-size: 24px;
+  line-height: 1.25;
+}
+.health-stat-header.long .health-stat-desc {
+  min-width: 0;
 }
 .health-info-box {
   background: var(--bg);

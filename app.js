@@ -1004,6 +1004,9 @@ function openHealthModal(id) {
   if (valEl) {
     valEl.textContent = currentCalculatedHealth ? info.getVal(currentCalculatedHealth) : '-';
     valEl.style.color = bColor;
+    // Nilai panjang (literasi) -> tata vertikal via .long agar tidak
+    // mendesak deskripsi keluar boks.
+    valEl.closest('.health-stat-header')?.classList.toggle('long', valEl.textContent.length > 14);
   }
 
   const descEl = document.getElementById('healthModalDesc');
