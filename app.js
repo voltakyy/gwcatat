@@ -346,17 +346,22 @@ if (transactionForm) {
 
 // ===== RENDER ALL =====
 function renderAll() {
+  // Bulanan: untuk daftar, grafik, kalender, uang saku, dan laporan.
   const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
+  // Kumulatif s.d. bulan aktif: untuk kartu ringkasan, tabungan, dan
+  // indikator kesehatan — sisa bulan lalu terbawa ke bulan berjalan.
+  // (Perbandingan string YYYY-MM valid secara kronologis.)
+  const cumulTx = transactions.filter(t => t.date && t.date.slice(0, 7) <= currentMonth);
   const labelEl = document.getElementById('monthLabel');
   if (labelEl) labelEl.textContent = monthLabel(currentMonth);
 
-  renderSummary(monthTx);
+  renderSummary(cumulTx);
   renderCharts(monthTx);
   renderIncomeList(monthTx);
   renderExpenseList(monthTx);
-  renderSavings(monthTx);
+  renderSavings(cumulTx);
   renderCalendar(monthTx);
-  renderHealthIndicators(monthTx);
+  renderHealthIndicators(cumulTx);
   renderAllowance(monthTx);
   updateReport(monthTx);
 }

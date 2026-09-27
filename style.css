@@ -420,6 +420,14 @@ body {
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+/* Penanda angka kumulatif s.d. bulan aktif */
+.cumul-hint {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: 10px;
+  opacity: .7;
+}
 .summary-card .value {
   font-family: var(--font-body);
   font-size: 24px;
