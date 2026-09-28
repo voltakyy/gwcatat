@@ -206,6 +206,14 @@
           <div class="label">Saldo Bersih (Aset) <span class="cumul-hint">kumulatif</span></div>
           <div id="totalWealth" class="value">Rp0</div>
         </div>
+        <div class="summary-card">
+          <div class="label">Piutang · Akan Diterima <span class="cumul-hint">kumulatif</span></div>
+          <div id="totalPiutang" class="value" style="color:var(--green)">Rp0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Utang · Harus Dibayar <span class="cumul-hint">kumulatif</span></div>
+          <div id="totalUtang" class="value" style="color:var(--red)">Rp0</div>
+        </div>
       </div>
 
       <!-- Quick Actions Utama -->
@@ -317,10 +325,16 @@
           <h2 class="section-title">Pendapatan & Arus Masuk</h2>
           <p style="font-size:12px;color:var(--muted);margin-top:2px">Kelola semua sumber penghasilan, gaji, uang jajan, dan hasil usaha.</p>
         </div>
-        <button id="btnIncomeTab" class="btn-income" style="padding:9px 18px;font-size:13px">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
-          Tambah Pendapatan
-        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnIncomeTab" class="btn-income" style="padding:9px 18px;font-size:13px">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
+            Tambah Pendapatan
+          </button>
+          <button id="btnPiutangTab" class="btn-income" style="padding:9px 18px;font-size:13px;background:var(--teal)" title="Shortcut: Alt+P">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15l-3-3m0 0l3-3m-3 3h12"/></svg>
+            Catat Piutang
+          </button>
+        </div>
       </div>
 
       <div class="card">
@@ -342,6 +356,16 @@
         </div>
         <div id="incomeList"></div>
       </div>
+
+      <div class="card" id="piutangCard">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15l-3-3m0 0l3-3m-3 3h12"/></svg>
+            <span>Piutang · Belum Diterima</span>
+          </div>
+        </div>
+        <div id="piutangList"></div>
+      </div>
     </div><!-- /tab-pendapatan -->
 
 
@@ -354,10 +378,16 @@
           <h2 class="section-title">Pengeluaran & Belanja</h2>
           <p style="font-size:12px;color:var(--muted);margin-top:2px">Pantau pengeluaran kebutuhan pokok dan kendalikan gaya hidup.</p>
         </div>
-        <button id="btnExpenseTab" class="btn-expense" style="padding:9px 18px;font-size:13px">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
-          Tambah Pengeluaran
-        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnExpenseTab" class="btn-expense" style="padding:9px 18px;font-size:13px">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
+            Tambah Pengeluaran
+          </button>
+          <button id="btnUtangTab" class="btn-expense" style="padding:9px 18px;font-size:13px;background:var(--teal)" title="Shortcut: Alt+U">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l3 3m0 0l-3 3m3-3H3"/></svg>
+            Catat Utang
+          </button>
+        </div>
       </div>
 
       <!-- Target Uang Jajan Realtime Bar -->
@@ -401,6 +431,16 @@
           </div>
         </div>
         <div id="expenseList"></div>
+      </div>
+
+      <div class="card" id="utangCard">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l3 3m0 0l-3 3m3-3H3"/></svg>
+            <span>Utang · Belum Dibayar</span>
+          </div>
+        </div>
+        <div id="utangList"></div>
       </div>
     </div><!-- /tab-pengeluaran -->
 
@@ -675,6 +715,17 @@
             </div>
           </div>
           <button class="tut-start" data-session="tabungan">Mulai Tutorial!</button>
+        </div>
+
+        <div class="card tut-session">
+          <div class="tut-session-head">
+            <span class="tut-num">Sesi 7</span>
+            <div>
+              <h3 class="tut-name">Utang & Piutang</h3>
+              <p class="tut-desc">Mencatat uang yang akan diterima atau harus dibayar, lalu menandainya lunas saat kas bergerak.</p>
+            </div>
+          </div>
+          <button class="tut-start" data-session="utangpiutang">Mulai Tutorial!</button>
         </div>
       </div>
 

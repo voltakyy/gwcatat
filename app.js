@@ -97,7 +97,12 @@ const CAT_INFO = {
   darurat:     { label: 'Simpanan Dana Darurat', pillar: 'darurat' },
 
   // Lainnya
-  lainnya:     { label: 'Lainnya', pillar: 'keinginan' }
+  lainnya:    { label: 'Lainnya', pillar: 'keinginan' },
+
+  // Utang–Piutang (tipe 'piutang'/'utang'): TIDAK masuk pilar 50/30/20.
+  // Semua penjumlahan pilar memfilter tipe 'in'/'out' dulu, jadi aman.
+  piutang:    { label: 'Piutang (Akan Diterima)', pillar: 'piutang' },
+  utang:      { label: 'Utang (Harus Dibayar)', pillar: 'utang' }
 };
 
 function getPillar(cat) {
@@ -181,7 +186,7 @@ function setBadge(id, text, color) {
 }
 
 // ===== MODAL TRANSAKSI LOGIC =====
-let modalMode = 'in'; // 'in' or 'out'
+let modalMode = 'in'; // 'in', 'out', 'piutang', atau 'utang'
 
 const modalOverlay  = document.getElementById('modalOverlay');
 const modalTitle    = document.getElementById('modalTitle');
@@ -219,6 +224,19 @@ function openModal(mode, defaultCategory = null) {
         <option value="lainnya">Lainnya</option>
       `;
       modalCategory.value = defaultCategory || 'pemasukan';
+    }
+  } else if (mode === 'piutang' || mode === 'utang') {
+    const isPiutang = mode === 'piutang';
+    if (modalTitle) modalTitle.textContent = isPiutang ? '↩ Catat Piutang (Akan Diterima)' : '↪ Catat Utang (Harus Dibayar)';
+    if (modalSubmit) {
+      modalSubmit.textContent = isPiutang ? 'Simpan Piutang (Enter)' : 'Simpan Utang (Enter)';
+      modalSubmit.className = isPiutang ? 'modal-submit income' : 'modal-submit expense';
+    }
+    if (modalCategory) {
+      modalCategory.innerHTML = isPiutang
+        ? `<option value="piutang">Piutang (Akan Diterima)</option>`
+        : `<option value="utang">Utang (Harus Dibayar)</option>`;
+      modalCategory.value = mode;
     }
   } else {
     const isSavings = defaultCategory === 'tabungan' || defaultCategory === 'darurat';
@@ -273,7 +291,10 @@ async function submitTransaction() {
   try {
     const date = modalDate ? modalDate.value : null;
     const desc = modalDesc ? modalDesc.value.trim() : '';
-    const finalDesc = desc || (modalMode === 'in' ? 'Pendapatan' : 'Pengeluaran');
+    const defaultDesc = modalMode === 'in' ? 'Pendapatan'
+      : modalMode === 'piutang' ? 'Piutang'
+      : modalMode === 'utang' ? 'Utang' : 'Pengeluaran';
+    const finalDesc = desc || defaultDesc;
     const amount = modalAmount ? parseRibuan(modalAmount.value) : 0;
     const cat = modalCategory ? modalCategory.value : 'lainnya';
 
@@ -359,6 +380,8 @@ function renderAll() {
   renderCharts(monthTx);
   renderIncomeList(monthTx);
   renderExpenseList(monthTx);
+  renderPiutangList(cumulTx);
+  renderUtangList(cumulTx);
   renderSavings(cumulTx);
   renderCalendar(monthTx);
   renderHealthIndicators(cumulTx);
@@ -366,15 +389,18 @@ function renderAll() {
   updateReport(monthTx);
 }
 
-// ===== 1. SUMMARY CARDS (BERANDA) =====
+// ===== 1. SUMMARY CARDS (BERANDA, kumulatif) =====
 function renderSummary(tx) {
   const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
   const totalSimpanan = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat'))
                           .reduce((s, t) => s + Number(t.amount), 0);
+  // Utang–piutang bukan kas, tapi memengaruhi kekayaan bersih.
+  const totalPiutang = tx.filter(t => t.type === 'piutang').reduce((s, t) => s + Number(t.amount), 0);
+  const totalUtang = tx.filter(t => t.type === 'utang').reduce((s, t) => s + Number(t.amount), 0);
 
   const sisaKas = totalIn - totalOut;
-  const totalWealth = Math.max(0, sisaKas) + totalSimpanan;
+  const totalWealth = Math.max(0, sisaKas) + totalSimpanan + totalPiutang - totalUtang;
 
   const elIn = document.getElementById('totalIn');
   if (elIn) elIn.textContent = fmtRp(totalIn);
@@ -392,6 +418,12 @@ function renderSummary(tx) {
   if (elWealth) {
     elWealth.textContent = fmtRp(totalWealth);
   }
+
+  const elPiu = document.getElementById('totalPiutang');
+  if (elPiu) elPiu.textContent = fmtRp(totalPiutang);
+
+  const elUta = document.getElementById('totalUtang');
+  if (elUta) elUta.textContent = fmtRp(totalUtang);
 }
 
 // ===== 2. CHARTS (BERANDA, PENDAPATAN, PENGELUARAN) =====
@@ -536,21 +568,28 @@ function renderCharts(tx) {
 function txItemHTML(t) {
   const isIn = t.type === 'in';
   const isSavings = t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat');
+  const isPiutang = t.type === 'piutang';
+  const isUtang = t.type === 'utang';
   const catLabel = getCategoryLabel(t.category);
-  
-  let iconClass = isIn ? 'in' : (isSavings ? 'savings' : 'out');
-  let iconSymbol = isIn ? '↑' : (isSavings ? '★' : '↓');
-  let amountClass = isIn ? 'in' : (isSavings ? 'savings' : 'out');
-  let amountPrefix = isIn ? '+' : '−';
+
+  let iconClass = isIn ? 'in' : (isSavings ? 'savings' : (isPiutang ? 'in' : (isUtang ? 'out' : 'out')));
+  let iconSymbol = isIn ? '↑' : (isSavings ? '★' : (isPiutang ? '↩' : (isUtang ? '↪' : '↓')));
+  let amountClass = isIn ? 'in' : (isSavings ? 'savings' : (isPiutang ? 'in' : 'out'));
+  let amountPrefix = (isIn || isPiutang) ? '+' : '−';
+
+  const settleBtn = (isPiutang || isUtang)
+    ? `<button class="tx-settle" data-id="${t.id}" title="${isPiutang ? 'Tandai sudah diterima (masuk kas)' : 'Tandai sudah dibayar (keluar kas)'}">${isPiutang ? '✓ Diterima' : '✓ Dibayar'}</button>`
+    : '';
 
   return `
   <div class="tx-item">
     <div class="tx-icon ${iconClass}">${iconSymbol}</div>
     <div class="tx-info">
-      <div class="tx-desc">${t.description || (isIn ? 'Pendapatan' : 'Pengeluaran')}</div>
+      <div class="tx-desc">${t.description || (isIn ? 'Pendapatan' : (isPiutang ? 'Piutang' : (isUtang ? 'Utang' : 'Pengeluaran')))}</div>
       <div class="tx-date">${t.date} · <span style="font-weight:600">${catLabel}</span></div>
     </div>
     <span class="tx-amount ${amountClass}">${amountPrefix}${fmtRp(t.amount)}</span>
+    ${settleBtn}
     <button class="tx-del" data-id="${t.id}" title="Hapus transaksi">✕</button>
   </div>`;
 }
@@ -568,6 +607,29 @@ function bindDeleteButtons() {
           const { error } = await window.sb.from('transactions').delete().eq('id', delId);
           if (error) throw error;
         } catch (e) { console.warn('hapus cloud gagal:', e); }
+      }
+    };
+  });
+  bindSettleButtons();
+}
+
+// Pelunasan utang–piutang: piutang→kas masuk, utang→kas keluar.
+function bindSettleButtons() {
+  document.querySelectorAll('.tx-settle').forEach(btn => {
+    btn.onclick = async function () {
+      const id = this.dataset.id;
+      const t = transactions.find(x => x.id === id);
+      if (!t) return;
+      const label = t.type === 'piutang' ? 'diterima (masuk kas)' : 'dibayar (keluar kas)';
+      if (!confirm(`Tandai ${fmtRp(t.amount)} sudah ${label}?`)) return;
+      t.type = t.type === 'piutang' ? 'in' : 'out';
+      saveData();
+      renderAll();
+      if (sbUser && window.sb && isUuid(id)) {
+        try {
+          const { error } = await window.sb.from('transactions').update({ type: t.type }).eq('id', id);
+          if (error) throw error;
+        } catch (e) { console.warn('pelunasan cloud gagal:', e); }
       }
     };
   });
@@ -599,6 +661,31 @@ function renderExpenseList(tx) {
   bindDeleteButtons();
 }
 
+// ===== 3b. DAFTAR UTANG–PIUTANG (kumulatif: yang belum lunas) =====
+function renderPiutangList(tx) {
+  const list = document.getElementById('piutangList');
+  if (!list) return;
+  const items = tx.filter(t => t.type === 'piutang').sort((a, b) => b.date.localeCompare(a.date));
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state">Tidak ada piutang. Semua sudah diterima!</div>';
+    return;
+  }
+  list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>';
+  bindDeleteButtons();
+}
+
+function renderUtangList(tx) {
+  const list = document.getElementById('utangList');
+  if (!list) return;
+  const items = tx.filter(t => t.type === 'utang').sort((a, b) => b.date.localeCompare(a.date));
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state">Tidak ada utang. Bersih!</div>';
+    return;
+  }
+  list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>';
+  bindDeleteButtons();
+}
+
 // ===== 4. HALAMAN TABUNGAN (KHUSUS & DETAIL) =====
 function renderSavings(tx) {
   const tabunganAmt = tx.filter(t => t.type === 'out' && getPillar(t.category) === 'tabungan').reduce((s, t) => s + Number(t.amount), 0);
@@ -608,7 +695,9 @@ function renderSavings(tx) {
   const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
   const sisaKas  = totalIn - totalOut;
-  const totalWealth = Math.max(0, sisaKas) + totalSimpanan;
+  const totalPiutang = tx.filter(t => t.type === 'piutang').reduce((s, t) => s + Number(t.amount), 0);
+  const totalUtang   = tx.filter(t => t.type === 'utang').reduce((s, t) => s + Number(t.amount), 0);
+  const totalWealth = Math.max(0, sisaKas) + totalSimpanan + totalPiutang - totalUtang;
 
   const effectiveSavings = totalSimpanan + Math.max(0, sisaKas);
   const savingsRatio = totalIn > 0 ? (effectiveSavings / totalIn) * 100 : (totalSimpanan > 0 ? 100 : 0);
@@ -1390,6 +1479,8 @@ window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'i') { e.preventDefault(); openModal('in'); return; }
     if (e.key.toLowerCase() === 'e') { e.preventDefault(); openModal('out'); return; }
     if (e.key.toLowerCase() === 's') { e.preventDefault(); openModal('out', 'tabungan'); return; }
+    if (e.key.toLowerCase() === 'p') { e.preventDefault(); openModal('piutang'); return; }
+    if (e.key.toLowerCase() === 'u') { e.preventDefault(); openModal('utang'); return; }
     if (e.key.toLowerCase() === 'k') { e.preventDefault(); openShortcutModal(); return; }
   }
 
@@ -1417,6 +1508,8 @@ document.getElementById('btnSideSavings')?.addEventListener('click', () => openM
 document.getElementById('btnIncomeTab')?.addEventListener('click', () => openModal('in'));
 document.getElementById('btnExpenseTab')?.addEventListener('click', () => openModal('out'));
 document.getElementById('btnSavingsTab')?.addEventListener('click', () => openModal('out', 'tabungan'));
+document.getElementById('btnPiutangTab')?.addEventListener('click', () => openModal('piutang'));
+document.getElementById('btnUtangTab')?.addEventListener('click', () => openModal('utang'));
 document.getElementById('btnEmergencyTab')?.addEventListener('click', () => openModal('out', 'darurat'));
 
 // ===== 15. EKSPOR & IMPOR DATA CADANGAN =====
@@ -1580,6 +1673,13 @@ const TUT_SESSIONS = {
     steps: [
       { tab: 'beranda', sel: '#calendarContainer', title: 'Peta Arus Kas Bulanan', text: 'Tanggal berbingkai emas berarti ada transaksi. Di HP hanya tampil titik hijau/merah agar rapi.' },
       { tab: 'beranda', sel: '#calendarSummary', title: 'Rincian per Tanggal', text: 'Klik salah satu tanggal, rincian masuk–keluar hari itu muncul di sini dengan sekali kilatan penanda.' }
+    ]
+  },
+  utangpiutang: {
+    num: 7, name: 'Utang & Piutang',
+    steps: [
+      { tab: 'pendapatan', sel: '#btnPiutangTab', title: 'Tombol Catat Piutang', text: 'Klik tombol ini saat ada uang yang akan kamu terima nanti (mis. teman berutang padamu). Nominalnya belum masuk kas.' },
+      { tab: 'pendapatan', sel: '#piutangCard', title: 'Daftar Belum Diterima', text: 'Semua piutang yang masih terbuka tampil di sini. Saat uangnya benar-benar diterima, klik tombol ✓ Diterima agar pindah ke kas. Utang bekerja sebaliknya di halaman Pengeluaran.' }
     ]
   },
   laporan: {

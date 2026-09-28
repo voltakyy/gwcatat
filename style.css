@@ -754,6 +754,21 @@ body {
   color: var(--red);
   background: rgba(192,96,74,0.1);
 }
+/* Tombol pelunasan utang–piutang */
+.tx-settle {
+  flex-shrink: 0;
+  background: var(--gold-lt);
+  border: 1px solid rgba(200,155,60,0.4);
+  color: var(--teal);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.tx-settle:hover { opacity: .8; }
 .empty-state {
   font-size: 13px;
   color: var(--muted);
