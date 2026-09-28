@@ -860,6 +860,27 @@ body {
   border-radius: 12px;
   padding: 12px 14px;
 }
+/* Intro kartu Jurnal Umum: penjelasan fungsi yang nyaman dibaca */
+.journal-intro {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.journal-intro p { margin: 0; }
+.journal-intro strong { color: var(--teal); }
+.journal-map {
+  margin-top: 8px !important;
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  line-height: 1.5 !important;
+}
+
 /* Badge angka di item sidebar */
 .nav-badge {
   display: inline-flex;
