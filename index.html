@@ -127,6 +127,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 8l-4 4 4 4M17 8l4 4-4 4M3 12h18"/>
               </svg>
               <span>Hutang-Piutang</span>
+              <span class="nav-badge" id="navDebtBadge" hidden></span>
             </div>
             <kbd class="kbd-hint">Alt+7</kbd>
           </button>
@@ -657,6 +658,8 @@
         </div>
       </div>
 
+      <div id="debtAlert" class="debt-alert" hidden></div>
+
       <div class="card" id="piutangCard">
         <div class="card-title">
           <div class="card-title-left">
@@ -677,6 +680,26 @@
           <span id="utangCount" style="font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap"></span>
         </div>
         <div id="utangList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Riwayat Pelunasan</span>
+          </div>
+        </div>
+        <div id="debtHistoryList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            <span>Dibatalkan</span>
+          </div>
+        </div>
+        <div id="debtCancelledList"></div>
       </div>
     </div><!-- /tab-hutangpiutang -->
 
@@ -852,6 +875,16 @@
         <select id="modalCategory" class="form-input">
           <option value="kebutuhan">Kebutuhan Pokok</option>
         </select>
+      </div>
+      <div id="debtExtraFields" hidden>
+        <div class="form-group">
+          <label class="form-label" for="modalParty">Pihak (nama orang / instansi / subjek)</label>
+          <input type="text" id="modalParty" class="form-input" placeholder="Contoh: Budi, PT Maju, Koperasi…" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="modalDue">Tenggat Waktu (opsional)</label>
+          <input type="date" id="modalDue" class="form-input" />
+        </div>
       </div>
       <button type="submit" id="modalSubmit" class="modal-submit income">Simpan Transaksi (Enter)</button>
     </form>

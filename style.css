@@ -795,21 +795,85 @@ body {
   color: var(--red);
   background: rgba(192,96,74,0.1);
 }
-/* Tombol pelunasan utang–piutang */
-.tx-settle {
-  flex-shrink: 0;
-  background: var(--gold-lt);
-  border: 1px solid rgba(200,155,60,0.4);
-  color: var(--teal);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 10px;
-  border-radius: 8px;
-  white-space: nowrap;
-  transition: opacity .15s;
+/* ---- TABEL HUTANG–PIUTANG ---- */
+.table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.debt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  min-width: 560px;
 }
-.tx-settle:hover { opacity: .8; }
+.debt-table th {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.debt-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text);
+  line-height: 1.4;
+}
+.debt-table tr:last-child td { border-bottom: none; }
+.debt-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.debt-pill.ok { color: var(--green); background: var(--green-lt); }
+.debt-pill.warn { color: var(--gold); background: var(--gold-lt); }
+.debt-pill.danger { color: var(--red); background: var(--red-lt); }
+.debt-pill.muted { color: var(--muted); background: var(--bg); }
+.debt-act {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  margin-left: 4px;
+  transition: opacity .15s, background .15s;
+  vertical-align: middle;
+}
+.debt-act:hover { opacity: .8; background: var(--bg); }
+.debt-act.settle { background: var(--green); border-color: var(--green); color: #fff; font-weight: 800; }
+.debt-act.danger { color: var(--red); border-color: rgba(192,96,74,0.35); }
+.debt-act.on { border-color: var(--gold); background: var(--gold-lt); }
+/* Banner pengingat tenggat */
+.debt-alert {
+  background: rgba(200,155,60,0.12);
+  border: 1px solid rgba(200,155,60,0.45);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+/* Badge angka di item sidebar */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
 .empty-state {
   font-size: 13px;
   color: var(--muted);
@@ -1334,13 +1398,7 @@ body {
   }
   .tx-amount { font-size: 14px; white-space: nowrap; }
   .tx-del { flex-shrink: 0; }
-  /* Baris utang–piutang: tombol lunasi jadi baris penuh ramah jempol */
   .tx-item { flex-wrap: wrap; row-gap: 8px; }
-  .tx-settle {
-    flex: 1 1 100%;
-    padding: 10px;
-    font-size: 12.5px;
-  }
 
   /* ---- Kalender mobile: titik ganti nominal, sel lebih ramping ---- */
   .calendar-grid { gap: 2px; }

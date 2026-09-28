@@ -22,7 +22,12 @@ function rowToLocal(r) {
     description: r.description || '',
     amount: Number(r.amount) || 0,
     type: r.type,
-    category: r.category || 'lainnya'
+    category: r.category || 'lainnya',
+    counterparty: r.counterparty || '',
+    due_date: r.due_date || '',
+    status: r.status || 'open',
+    pinned: !!r.pinned,
+    remind: r.remind !== false
   };
 }
 
@@ -33,7 +38,12 @@ function localToRow(t) {
     type: t.type,
     category: t.category || 'lainnya',
     amount: Number(t.amount) || 0,
-    description: t.description || ''
+    description: t.description || '',
+    counterparty: t.counterparty || '',
+    due_date: t.due_date || null,
+    status: t.status || 'open',
+    pinned: !!t.pinned,
+    remind: t.remind !== false
   };
 }
 
@@ -136,20 +146,6 @@ function parseRibuan(v) {
   return parseInt(v.replace(/[^0-9]/g, '') || '0', 10);
 }
 
-// Umur tagihan dalam hari (untuk piutang/utang): "hari ini",
-// "kemarin", atau "N hari lalu". Tanggal depan: "N hari lagi".
-function relAge(dateStr) {
-  if (!dateStr || typeof dateStr !== 'string') return '';
-  const parts = dateStr.split('-').map(Number);
-  if (parts.length < 3 || parts.some(isNaN)) return '';
-  const d = new Date(parts[0], parts[1] - 1, parts[2]);
-  const now = new Date();
-  const diff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - d) / 86400000);
-  if (diff <= 0) return diff === 0 ? 'hari ini' : `${Math.abs(diff)} hari lagi`;
-  if (diff === 1) return 'kemarin';
-  return `${diff} hari lalu`;
-}
-
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
@@ -211,12 +207,16 @@ const modalAmount   = document.getElementById('modalAmount');
 const modalClose    = document.getElementById('modalClose');
 const modalCategory = document.getElementById('modalCategory');
 const transactionForm = document.getElementById('transactionForm');
+const debtExtraFields = document.getElementById('debtExtraFields');
+const modalParty = document.getElementById('modalParty');
+const modalDue = document.getElementById('modalDue');
 
 if (modalAmount) formatAmountInput(modalAmount);
 
 function openModal(mode, defaultCategory = null) {
   modalMode = mode;
   if (!modalOverlay) return;
+  if (debtExtraFields) debtExtraFields.hidden = true;
 
   if (modalDate) modalDate.value = new Date().toISOString().slice(0, 10);
   if (modalDesc) modalDesc.value = '';
@@ -252,6 +252,9 @@ function openModal(mode, defaultCategory = null) {
         : `<option value="utang">Utang (Harus Dibayar)</option>`;
       modalCategory.value = mode;
     }
+    if (debtExtraFields) debtExtraFields.hidden = false;
+    if (modalParty) modalParty.value = '';
+    if (modalDue) modalDue.value = '';
   } else {
     const isSavings = defaultCategory === 'tabungan' || defaultCategory === 'darurat';
     if (modalTitle) {
@@ -324,7 +327,12 @@ async function submitTransaction() {
       description: finalDesc,
       amount,
       type: modalMode,
-      category: cat
+      category: cat,
+      counterparty: (modalMode === 'piutang' || modalMode === 'utang') && modalParty ? modalParty.value.trim() : '',
+      due_date: (modalMode === 'piutang' || modalMode === 'utang') && modalDue ? (modalDue.value || '') : '',
+      status: 'open',
+      pinned: false,
+      remind: true
     };
     transactions.push(tx);
 
@@ -394,8 +402,7 @@ function renderAll() {
   renderCharts(monthTx);
   renderIncomeList(monthTx);
   renderExpenseList(monthTx);
-  renderPiutangList(cumulTx);
-  renderUtangList(cumulTx);
+  renderDebtPage(cumulTx);
   renderSavings(cumulTx);
   renderCalendar(monthTx);
   renderHealthIndicators(cumulTx);
@@ -410,8 +417,9 @@ function renderSummary(tx) {
   const totalSimpanan = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat'))
                           .reduce((s, t) => s + Number(t.amount), 0);
   // Utang–piutang bukan kas, tapi memengaruhi kekayaan bersih.
-  const totalPiutang = tx.filter(t => t.type === 'piutang').reduce((s, t) => s + Number(t.amount), 0);
-  const totalUtang = tx.filter(t => t.type === 'utang').reduce((s, t) => s + Number(t.amount), 0);
+  // Hanya yang masih terbuka (open) yang dihitung.
+  const totalPiutang = tx.filter(t => t.type === 'piutang' && (t.status || 'open') === 'open').reduce((s, t) => s + Number(t.amount), 0);
+  const totalUtang = tx.filter(t => t.type === 'utang' && (t.status || 'open') === 'open').reduce((s, t) => s + Number(t.amount), 0);
 
   const sisaKas = totalIn - totalOut;
   const totalWealth = Math.max(0, sisaKas) + totalSimpanan + totalPiutang - totalUtang;
@@ -591,22 +599,14 @@ function txItemHTML(t) {
   let amountClass = isIn ? 'in' : (isSavings ? 'savings' : (isPiutang ? 'in' : 'out'));
   let amountPrefix = (isIn || isPiutang) ? '+' : '−';
 
-  const settleBtn = (isPiutang || isUtang)
-    ? `<button class="tx-settle" data-id="${t.id}" title="${isPiutang ? 'Tandai sudah diterima (masuk kas)' : 'Tandai sudah dibayar (keluar kas)'}">${isPiutang ? '✓ Diterima' : '✓ Dibayar'}</button>`
-    : '';
-  const ageHint = (isPiutang || isUtang)
-    ? ` · <span style="font-weight:700;color:${(relAge(t.date) || '').includes('lagi') ? 'var(--muted)' : (isPiutang ? 'var(--green)' : 'var(--red)')}">${relAge(t.date)}</span>`
-    : '';
-
   return `
   <div class="tx-item">
     <div class="tx-icon ${iconClass}">${iconSymbol}</div>
     <div class="tx-info">
       <div class="tx-desc">${t.description || (isIn ? 'Pendapatan' : (isPiutang ? 'Piutang' : (isUtang ? 'Utang' : 'Pengeluaran')))}</div>
-      <div class="tx-date">${t.date} · <span style="font-weight:600">${catLabel}</span>${ageHint}</div>
+      <div class="tx-date">${t.date} · <span style="font-weight:600">${catLabel}</span></div>
     </div>
     <span class="tx-amount ${amountClass}">${amountPrefix}${fmtRp(t.amount)}</span>
-    ${settleBtn}
     <button class="tx-del" data-id="${t.id}" title="Hapus transaksi">✕</button>
   </div>`;
 }
@@ -624,29 +624,6 @@ function bindDeleteButtons() {
           const { error } = await window.sb.from('transactions').delete().eq('id', delId);
           if (error) throw error;
         } catch (e) { console.warn('hapus cloud gagal:', e); }
-      }
-    };
-  });
-  bindSettleButtons();
-}
-
-// Pelunasan utang–piutang: piutang→kas masuk, utang→kas keluar.
-function bindSettleButtons() {
-  document.querySelectorAll('.tx-settle').forEach(btn => {
-    btn.onclick = async function () {
-      const id = this.dataset.id;
-      const t = transactions.find(x => x.id === id);
-      if (!t) return;
-      const label = t.type === 'piutang' ? 'diterima (masuk kas)' : 'dibayar (keluar kas)';
-      if (!confirm(`Tandai ${fmtRp(t.amount)} sudah ${label}?`)) return;
-      t.type = t.type === 'piutang' ? 'in' : 'out';
-      saveData();
-      renderAll();
-      if (sbUser && window.sb && isUuid(id)) {
-        try {
-          const { error } = await window.sb.from('transactions').update({ type: t.type }).eq('id', id);
-          if (error) throw error;
-        } catch (e) { console.warn('pelunasan cloud gagal:', e); }
       }
     };
   });
@@ -678,37 +655,197 @@ function renderExpenseList(tx) {
   bindDeleteButtons();
 }
 
-// ===== 3b. DAFTAR UTANG–PIUTANG (kumulatif: yang belum lunas) =====
-function renderPiutangList(tx) {
-  const list = document.getElementById('piutangList');
-  if (!list) return;
-  const items = tx.filter(t => t.type === 'piutang').sort((a, b) => b.date.localeCompare(a.date));
-  const countEl = document.getElementById('piutangCount');
-  if (countEl) countEl.textContent = items.length
-    ? `${items.length} terbuka · ${fmtRp(items.reduce((s, t) => s + Number(t.amount), 0))}`
-    : '';
-  if (!items.length) {
-    list.innerHTML = '<div class="empty-state">Tidak ada piutang. Semua sudah diterima!</div>';
-    return;
-  }
-  list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>';
-  bindDeleteButtons();
+// ===== 3b. HALAMAN HUTANG–PIUTANG (tabel + riwayat + reminder) =====
+function debtStatus(t) { return t.status || 'open'; }
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-function renderUtangList(tx) {
-  const list = document.getElementById('utangList');
-  if (!list) return;
-  const items = tx.filter(t => t.type === 'utang').sort((a, b) => b.date.localeCompare(a.date));
-  const countEl = document.getElementById('utangCount');
-  if (countEl) countEl.textContent = items.length
-    ? `${items.length} terbuka · ${fmtRp(items.reduce((s, t) => s + Number(t.amount), 0))}`
-    : '';
-  if (!items.length) {
-    list.innerHTML = '<div class="empty-state">Tidak ada utang. Bersih!</div>';
-    return;
+function fmtTanggalID(dateStr) {
+  if (!dateStr) return '–';
+  const p = dateStr.split('-').map(Number);
+  if (p.length < 3 || p.some(isNaN)) return dateStr;
+  const bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  return `${p[2]} ${bln[p[1] - 1] || ''} ${p[0]}`;
+}
+
+// Status tenggat khusus item terbuka: overdue | soon (≤3 hari) | ok | ''
+function dueState(t) {
+  if (!t.due_date || debtStatus(t) !== 'open') return '';
+  const today = todayStr();
+  if (t.due_date < today) return 'overdue';
+  const diff = Math.round((new Date(t.due_date + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+  return diff <= 3 ? 'soon' : 'ok';
+}
+
+function sortDebt(items) {
+  return items.slice().sort((a, b) => {
+    if (!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
+    const da = a.due_date || 'zzzz', db = b.due_date || 'zzzz';
+    if (da !== db) return da < db ? -1 : 1;
+    return b.date.localeCompare(a.date);
+  });
+}
+
+function debtRowHTML(t) {
+  const st = dueState(t);
+  const dueTxt = !t.due_date ? '<span style="color:var(--muted)">–</span>'
+    : st === 'overdue' ? `<span style="color:var(--red);font-weight:700">${fmtTanggalID(t.due_date)} · lewat!</span>`
+    : st === 'soon' ? `<span style="color:var(--gold);font-weight:700">${fmtTanggalID(t.due_date)} · segera</span>`
+    : fmtTanggalID(t.due_date);
+  const status = debtStatus(t);
+  const pill = status === 'settled'
+    ? '<span class="debt-pill ok">Lunas</span>'
+    : status === 'cancelled'
+    ? '<span class="debt-pill muted">Batal</span>'
+    : st === 'overdue'
+    ? '<span class="debt-pill danger">Jatuh tempo</span>'
+    : '<span class="debt-pill warn">Terbuka</span>';
+  const acts = [];
+  if (status === 'open') {
+    acts.push(`<button class="debt-act settle" data-debt-act="settle" data-id="${t.id}" title="Tandai lunas & masukkan ke kas">✓</button>`);
+    acts.push(`<button class="debt-act ghost" data-debt-act="cancel" data-id="${t.id}" title="Batalkan catatan">✕</button>`);
+  } else if (status === 'cancelled') {
+    acts.push(`<button class="debt-act ghost" data-debt-act="reactivate" data-id="${t.id}" title="Aktifkan lagi">↩</button>`);
   }
-  list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>';
-  bindDeleteButtons();
+  acts.push(`<button class="debt-act ghost${t.pinned ? ' on' : ''}" data-debt-act="pin" data-id="${t.id}" title="${t.pinned ? 'Lepas sematan' : 'Sematkan ke atas'}">📌</button>`);
+  acts.push(`<button class="debt-act ghost${t.remind === false ? '' : ' on'}" data-debt-act="remind" data-id="${t.id}" title="${t.remind === false ? 'Nyalakan pengingat' : 'Matikan pengingat'}">🔔</button>`);
+  if (status === 'cancelled') acts.push(`<button class="debt-act danger" data-debt-act="del" data-id="${t.id}" title="Hapus permanen">🗑</button>`);
+  return `<tr>
+    <td><strong>${t.counterparty || '–'}</strong><br><span style="color:var(--muted);font-size:11px">${t.description || ''}</span></td>
+    <td style="white-space:nowrap">${fmtTanggalID(t.date)}</td>
+    <td style="white-space:nowrap">${dueTxt}</td>
+    <td style="white-space:nowrap;text-align:right"><strong>${fmtRp(t.amount)}</strong></td>
+    <td>${pill}</td>
+    <td style="white-space:nowrap;text-align:right">${acts.join('')}</td>
+  </tr>`;
+}
+
+function debtTableHTML(items, emptyText) {
+  if (!items.length) return `<div class="empty-state">${emptyText}</div>`;
+  return `<div class="table-scroll"><table class="debt-table">
+    <thead><tr><th>Pihak</th><th>Tanggal</th><th>Tenggat</th><th style="text-align:right">Nominal</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
+    <tbody>${items.map(debtRowHTML).join('')}</tbody>
+  </table></div>`;
+}
+
+function debtNeeds(t) { return (t.type === 'piutang' || t.type === 'utang'); }
+
+function renderDebtPage(tx) {
+  const debts = tx.filter(debtNeeds);
+  const openP = sortDebt(debts.filter(t => t.type === 'piutang' && debtStatus(t) === 'open'));
+  const openU = sortDebt(debts.filter(t => t.type === 'utang' && debtStatus(t) === 'open'));
+  const done = debts.filter(t => debtStatus(t) === 'settled').sort((a, b) => b.date.localeCompare(a.date));
+  const cancelled = debts.filter(t => debtStatus(t) === 'cancelled').sort((a, b) => b.date.localeCompare(a.date));
+
+  const setHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  setHTML('piutangList', debtTableHTML(openP, 'Tidak ada piutang. Semua sudah diterima!'));
+  setHTML('utangList', debtTableHTML(openU, 'Tidak ada utang. Bersih!'));
+  setHTML('debtHistoryList', debtTableHTML(done, 'Belum ada yang dilunasi.'));
+  setHTML('debtCancelledList', debtTableHTML(cancelled, 'Tidak ada catatan batal.'));
+
+  const sum = arr => arr.reduce((s, t) => s + Number(t.amount), 0);
+  const pc = document.getElementById('piutangCount');
+  if (pc) pc.textContent = openP.length ? `${openP.length} terbuka · ${fmtRp(sum(openP))}` : '';
+  const uc = document.getElementById('utangCount');
+  if (uc) uc.textContent = openU.length ? `${openU.length} terbuka · ${fmtRp(sum(openU))}` : '';
+
+  // Pengingat: item terbuka + reminder ON yang lewat / ≤3 hari tenggat.
+  const watch = debts.filter(t => debtStatus(t) === 'open' && t.remind !== false && (dueState(t) === 'overdue' || dueState(t) === 'soon'));
+  const over = watch.filter(t => dueState(t) === 'overdue').length;
+  const soon = watch.length - over;
+  const alertEl = document.getElementById('debtAlert');
+  if (alertEl) {
+    if (!watch.length) { alertEl.hidden = true; }
+    else {
+      alertEl.hidden = false;
+      alertEl.innerHTML = `⏰ <strong>${watch.length} tagihan perlu perhatian</strong> — ${over ? `${over} lewat tenggat` : ''}${over && soon ? ' · ' : ''}${soon ? `${soon} jatuh tempo ≤3 hari` : ''}. ${over ? 'Segera lunasi atau batalkan.' : 'Siapkan dananya.'}`;
+    }
+  }
+  const badge = document.getElementById('navDebtBadge');
+  if (badge) {
+    if (!watch.length) { badge.hidden = true; }
+    else { badge.hidden = false; badge.textContent = watch.length > 9 ? '9+' : String(watch.length); }
+  }
+
+  bindDebtButtons();
+}
+
+async function cloudUpdateTx(id, patch) {
+  if (!sbUser || !window.sb || !isUuid(id)) return false;
+  try {
+    const { error } = await window.sb.from('transactions').update(patch).eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (e) { console.warn('update cloud gagal:', e); return false; }
+}
+
+async function cloudInsertTx(t) {
+  if (!sbUser || !window.sb) return null;
+  try {
+    const { data, error } = await window.sb.from('transactions').insert(localToRow(t)).select().single();
+    if (error) throw error;
+    return data ? data.id : null;
+  } catch (e) { console.warn('insert cloud gagal:', e); return null; }
+}
+
+function bindDebtButtons() {
+  document.querySelectorAll('[data-debt-act]').forEach(btn => {
+    btn.onclick = async function () {
+      const id = this.dataset.id;
+      const act = this.dataset.debtAct;
+      const t = transactions.find(x => x.id === id);
+      if (!t) return;
+
+      if (act === 'settle') {
+        const label = t.type === 'piutang' ? 'diterima (masuk kas)' : 'dibayar (keluar kas)';
+        if (!confirm(`Tandai ${fmtRp(t.amount)} sudah ${label}? Catatan asli tersimpan di Riwayat.`)) return;
+        t.status = 'settled';
+        // Entri kas pendamping agar masuk pendapatan/pengeluaran utama.
+        const kas = {
+          id: uid(),
+          date: todayStr(),
+          description: `Pelunasan ${t.type === 'piutang' ? 'piutang' : 'utang'}: ${t.counterparty || t.description || ''}`.trim(),
+          amount: Number(t.amount) || 0,
+          type: t.type === 'piutang' ? 'in' : 'out',
+          category: 'lainnya',
+          counterparty: '', due_date: '', status: 'open', pinned: false, remind: false
+        };
+        transactions.push(kas);
+        saveData();
+        renderAll();
+        await cloudUpdateTx(id, { status: 'settled' });
+        const newId = await cloudInsertTx(kas);
+        if (newId) { kas.id = newId; saveData(); }
+      } else if (act === 'cancel') {
+        if (!confirm('Batalkan catatan ini? Ia pindah ke bagian Dibatalkan, tidak hilang.')) return;
+        t.status = 'cancelled';
+        saveData(); renderAll();
+        await cloudUpdateTx(id, { status: 'cancelled' });
+      } else if (act === 'reactivate') {
+        t.status = 'open';
+        saveData(); renderAll();
+        await cloudUpdateTx(id, { status: 'open' });
+      } else if (act === 'pin') {
+        t.pinned = !t.pinned;
+        saveData(); renderAll();
+        await cloudUpdateTx(id, { pinned: t.pinned });
+      } else if (act === 'remind') {
+        t.remind = t.remind === false ? true : false;
+        saveData(); renderAll();
+        await cloudUpdateTx(id, { remind: t.remind });
+      } else if (act === 'del') {
+        if (!confirm('Hapus permanen catatan batal ini? Tidak bisa dikembalikan.')) return;
+        transactions = transactions.filter(x => x.id !== id);
+        saveData(); renderAll();
+        if (sbUser && window.sb && isUuid(id)) {
+          try { await window.sb.from('transactions').delete().eq('id', id); } catch (e) {}
+        }
+      }
+    };
+  });
 }
 
 // ===== 4. HALAMAN TABUNGAN (KHUSUS & DETAIL) =====
@@ -720,11 +857,12 @@ function renderSavings(tx) {
   const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
   const sisaKas  = totalIn - totalOut;
-  const totalPiutang = tx.filter(t => t.type === 'piutang').reduce((s, t) => s + Number(t.amount), 0);
-  const totalUtang   = tx.filter(t => t.type === 'utang').reduce((s, t) => s + Number(t.amount), 0);
+  const totalPiutang = tx.filter(t => t.type === 'piutang' && (t.status || 'open') === 'open').reduce((s, t) => s + Number(t.amount), 0);
+  const totalUtang   = tx.filter(t => t.type === 'utang' && (t.status || 'open') === 'open').reduce((s, t) => s + Number(t.amount), 0);
   const totalWealth = Math.max(0, sisaKas) + totalSimpanan + totalPiutang - totalUtang;
 
   const effectiveSavings = totalSimpanan + Math.max(0, sisaKas);
+
   const savingsRatio = totalIn > 0 ? (effectiveSavings / totalIn) * 100 : (totalSimpanan > 0 ? 100 : 0);
 
   // Set ringkasan metrik tabungan
@@ -1404,7 +1542,7 @@ if (savingsGoalInput) {
 // Tarik data cloud (transaksi + settings), migrasi cache lokal lawas ke atas.
 // Tanda tangan isi transaksi untuk deteksi duplikat
 function txSignature(t) {
-  return [t.date, t.type, t.category || '', Number(t.amount) || 0, t.description || ''].join('|');
+  return [t.date, t.type, t.category || '', Number(t.amount) || 0, t.description || '', t.counterparty || '', t.due_date || '', t.status || 'open'].join('|');
 }
 
 async function pullCloud() {
@@ -1731,7 +1869,7 @@ const TUT_SESSIONS = {
     num: 7, name: 'Utang & Piutang',
     steps: [
       { tab: 'hutangpiutang', sel: '#btnPiutangTab', title: 'Tombol Catat Piutang', text: 'Klik tombol ini saat ada uang yang akan kamu terima nanti (mis. teman berutang padamu). Nominalnya belum masuk kas.' },
-      { tab: 'hutangpiutang', sel: '#piutangCard', title: 'Daftar Belum Diterima', text: 'Semua piutang yang masih terbuka tampil di sini. Saat uangnya benar-benar diterima, klik tombol ✓ Diterima agar pindah ke kas. Utang bekerja sebaliknya di kartu bawahnya.' }
+      { tab: 'hutangpiutang', sel: '#piutangCard', title: 'Tabel & Riwayat', text: 'Tabel per tipe mencatat pihak, tanggal, dan tenggat. Yang lunas pindah ke Riwayat (sekaligus masuk kas), yang batal ke bagian Dibatalkan. Sematkan 📌 yang penting, atur 🔔 pengingat per baris.' }
     ]
   },
   laporan: {
