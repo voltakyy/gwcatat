@@ -777,6 +777,58 @@
       <div class="card">
         <div class="card-title">
           <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Laba Rugi Bulan Ini (Untung / Rugi)</span>
+          </div>
+        </div>
+        <p style="font-size:12.5px;line-height:1.6;color:var(--text);margin-bottom:12px">Apakah usaha <strong>untung atau rugi</strong> bulan ini?
+        Pendapatan dikurangi beban usaha. Tabungan yang disisihkan <strong>bukan</strong> beban — ia tetap milik Anda.</p>
+        <div class="report-stats">
+          <div class="rstat"><div class="rl">Pendapatan</div><div class="rv" id="plIn" style="color:var(--green)">Rp0</div></div>
+          <div class="rstat"><div class="rl">Beban Usaha</div><div class="rv" id="plBeban" style="color:var(--red)">Rp0</div></div>
+          <div class="rstat"><div class="rl">Disisihkan ke Tabungan</div><div class="rv" id="plSisih" style="color:var(--gold)">Rp0</div></div>
+        </div>
+        <div class="summary-card dark" style="margin-top:12px;text-align:center">
+          <div class="label" style="color:rgba(255,255,255,.75)">Laba Bersih (Untung Bersih)</div>
+          <div id="plLaba" class="value" style="font-size:30px">Rp0</div>
+          <div id="plMargin" style="font-size:12px;font-weight:700;color:var(--gold)">Margin 0%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/></svg>
+            <span>Neraca Sederhana (Harta, Utang & Modal)</span>
+          </div>
+          <span id="nrBalance" style="font-size:11px;font-weight:700;white-space:nowrap"></span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.6;color:var(--text);margin-bottom:12px">Posisi usaha <strong>saat ini</strong> (kumulatif):
+        apa yang dimiliki (<strong>Aset</strong>), apa yang harus dibayar (<strong>Kewajiban</strong>),
+        dan sisanya sebagai <strong>Modal Bersih</strong>. Aset selalu sama dengan Kewajiban + Modal.</p>
+        <div class="report-stats">
+          <div class="rstat"><div class="rl">Kas di Tangan</div><div class="rv" id="nrKas">Rp0</div></div>
+          <div class="rstat"><div class="rl">Piutang</div><div class="rv" id="nrPiutang" style="color:var(--green)">Rp0</div></div>
+          <div class="rstat"><div class="rl">Simpanan</div><div class="rv" id="nrSimpanan" style="color:var(--gold)">Rp0</div></div>
+          <div class="rstat"><div class="rl">Total Aset</div><div class="rv" id="nrAset" style="color:var(--teal)">Rp0</div></div>
+          <div class="rstat"><div class="rl">Kewajiban (Utang)</div><div class="rv" id="nrUtang" style="color:var(--red)">Rp0</div></div>
+          <div class="rstat"><div class="rl">Modal Bersih (Ekuitas)</div><div class="rv" id="nrEkuitas" style="color:var(--teal)">Rp0</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+            <span>Catatan atas Laporan (CALK)</span>
+          </div>
+        </div>
+        <div class="health-ref-list" id="calkList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h10"/></svg>
             <span>Jurnal Umum (Pembukuan Baku)</span>
           </div>

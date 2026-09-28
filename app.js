@@ -403,6 +403,7 @@ function renderAll() {
   renderIncomeList(monthTx);
   renderExpenseList(monthTx);
   renderDebtPage(cumulTx);
+  renderBalanceSheet();
   renderSavings(cumulTx);
   renderCalendar(monthTx);
   renderHealthIndicators(cumulTx);
@@ -1395,6 +1396,8 @@ function updateReport(tx) {
       }
     }
     renderJournal(tx);
+    renderProfitLoss(tx);
+    renderCalk(tx);
   } catch (e) {
     console.error("Error updating report:", err);
   }
@@ -1445,6 +1448,73 @@ function renderCashFlow(tx) {
       </tr>`).join('')}
     </tbody>
   </table></div>`;
+}
+
+// ===== 8a3. LABA RUGI (bulanan, bahasa pemilik usaha) =====
+function profitLoss(tx) {
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
+  const beban = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'kebutuhan' || getPillar(t.category) === 'keinginan'))
+    .reduce((s, t) => s + Number(t.amount), 0);
+  const sisih = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat'))
+    .reduce((s, t) => s + Number(t.amount), 0);
+  const laba = totalIn - beban;
+  return { totalIn, beban, sisih, laba, margin: totalIn > 0 ? (laba / totalIn) * 100 : 0 };
+}
+
+function renderProfitLoss(tx) {
+  const p = profitLoss(tx);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('plIn', fmtRp(p.totalIn));
+  set('plBeban', fmtRp(p.beban));
+  set('plSisih', fmtRp(p.sisih));
+  set('plLaba', (p.laba < 0 ? '−' : '') + fmtRp(Math.abs(p.laba)));
+  const labaEl = document.getElementById('plLaba');
+  if (labaEl) labaEl.style.color = p.laba < 0 ? 'var(--red)' : '#fff';
+  set('plMargin', `Margin ${p.margin >= 0 ? '' : '−'}${Math.abs(Math.round(p.margin))}%${p.laba < 0 ? ' (Rugi)' : ''}`);
+}
+
+// ===== 8a4. NERACA SEDERHANA (kumulatif: Aset = Kewajiban + Ekuitas) =====
+function balanceSheet() {
+  const all = transactions.filter(t => t.date);
+  const totalIn = all.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
+  const totalOut = all.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
+  const kas = totalIn - totalOut;
+  const simpanan = all.filter(t => t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat'))
+    .reduce((s, t) => s + Number(t.amount), 0);
+  const piutang = all.filter(t => t.type === 'piutang' && (t.status || 'open') === 'open').reduce((s, t) => s + Number(t.amount), 0);
+  const utang = all.filter(t => t.type === 'utang' && (t.status || 'open') === 'open').reduce((s, t) => s + Number(t.amount), 0);
+  const aset = kas + simpanan + piutang;
+  const ekuitas = aset - utang;
+  return { kas, simpanan, piutang, aset, utang, ekuitas };
+}
+
+function renderBalanceSheet() {
+  const n = balanceSheet();
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('nrKas', fmtRp(n.kas));
+  set('nrPiutang', fmtRp(n.piutang));
+  set('nrSimpanan', fmtRp(n.simpanan));
+  set('nrAset', fmtRp(n.aset));
+  set('nrUtang', fmtRp(n.utang));
+  set('nrEkuitas', fmtRp(n.ekuitas));
+  const balEl = document.getElementById('nrBalance');
+  if (balEl) {
+    const ok = n.aset === n.utang + n.ekuitas;
+    balEl.textContent = ok ? '✓ Seimbang' : '⚠ Selisih';
+    balEl.style.color = ok ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+// ===== 8a5. CALK OTOMATIS (komponen SAK EMKM ke-3) =====
+function renderCalk(tx) {
+  const box = document.getElementById('calkList');
+  if (!box) return;
+  const nJenis = new Set(tx.map(t => t.category)).size;
+  box.innerHTML = [
+    `Laporan ini disusun dari catatan kas gwcatat periode <strong>${monthLabel(currentMonth)}</strong> dengan basis kas (dicatat saat uang bergerak).`,
+    `Mencakup <strong>${tx.length} transaksi</strong> dalam <strong>${nJenis} kategori</strong>. Piutang/utang diakui saat dicatat dan masuk kas saat dilunasi.`,
+    `Tabungan yang disisihkan bukan beban, melainkan perpindahan ke aset simpanan milik sendiri.`
+  ].map(t => `<div class="ref-bullet">${t}</div>`).join('');
 }
 
 // ===== 8b. JURNAL UMUM (pembukuan baku: tiap transaksi = Debit + Kredit) =====
@@ -1560,8 +1630,39 @@ document.getElementById('btnExportExcel')?.addEventListener('click', () => {
   ]);
   ws2['!cols'] = [{ wch: 28 }, { wch: 24 }];
 
+  const pl = profitLoss(monthTx);
+  const ws3 = window.XLSX.utils.aoa_to_sheet([
+    ['LABA RUGI', monthLabel(currentMonth)],
+    [],
+    ['Pendapatan', pl.totalIn],
+    ['Beban Usaha', pl.beban],
+    ['LABA BERSIH (Untung)', pl.laba],
+    ['Margin', `${Math.round(pl.margin)}%`],
+    ['Disisihkan ke Tabungan (bukan beban)', pl.sisih]
+  ]);
+  ws3['!cols'] = [{ wch: 34 }, { wch: 20 }];
+
+  const nr = balanceSheet();
+  const ws4 = window.XLSX.utils.aoa_to_sheet([
+    ['NERACA (posisi kumulatif)', monthLabel(currentMonth)],
+    [],
+    ['ASET', ''],
+    ['Kas di Tangan', nr.kas],
+    ['Piutang', nr.piutang],
+    ['Simpanan', nr.simpanan],
+    ['TOTAL ASET', nr.aset],
+    [],
+    ['KEWAJIBAN', ''],
+    ['Utang', nr.utang],
+    [],
+    ['EKUITAS (Modal Bersih)', nr.ekuitas]
+  ]);
+  ws4['!cols'] = [{ wch: 30 }, { wch: 20 }];
+
   const wb = window.XLSX.utils.book_new();
   window.XLSX.utils.book_append_sheet(wb, wsLap, 'Laporan');
+  window.XLSX.utils.book_append_sheet(wb, ws3, 'Laba Rugi');
+  window.XLSX.utils.book_append_sheet(wb, ws4, 'Neraca');
   window.XLSX.utils.book_append_sheet(wb, ws, 'Jurnal Umum');
   window.XLSX.utils.book_append_sheet(wb, ws2, 'Ringkasan');
   window.XLSX.writeFile(wb, `gwcatat-laporan-${currentMonth}.xlsx`);
