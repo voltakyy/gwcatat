@@ -1400,6 +1400,53 @@ function updateReport(tx) {
   }
 }
 
+// ===== 8a2. RINCIAN ARUS KAS (bahasa pemilik usaha: Masuk/Keluar/Saldo) =====
+function cashFlowRows(tx) {
+  // Saldo awal = kas kumulatif sebelum bulan laporan.
+  const ym = currentMonth;
+  const opening = transactions
+    .filter(t => t.date && t.date.slice(0, 7) < ym && (t.type === 'in' || t.type === 'out'))
+    .reduce((s, t) => s + (t.type === 'in' ? 1 : -1) * (Number(t.amount) || 0), 0);
+  const rows = tx
+    .filter(t => t.date && (t.type === 'in' || t.type === 'out') && (t.status || 'open') !== 'cancelled')
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(t => ({
+      date: t.date,
+      ket: `${t.description || getCategoryLabel(t.category)}${t.counterparty ? ` — ${t.counterparty}` : ''}`,
+      masuk: t.type === 'in' ? (Number(t.amount) || 0) : 0,
+      keluar: t.type === 'out' ? (Number(t.amount) || 0) : 0
+    }));
+  let saldo = opening;
+  rows.forEach(r => { saldo += r.masuk - r.keluar; r.saldo = saldo; });
+  return { opening, rows };
+}
+
+function renderCashFlow(tx) {
+  const box = document.getElementById('cashFlowTable');
+  if (!box) return;
+  const { opening, rows } = cashFlowRows(tx);
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty-state">Belum ada arus kas bulan ini.</div>';
+    return;
+  }
+  box.innerHTML = `<div class="table-scroll"><table class="debt-table">
+    <thead><tr><th>Tanggal</th><th>Keterangan</th><th style="text-align:right">Masuk</th><th style="text-align:right">Keluar</th><th style="text-align:right">Saldo</th></tr></thead>
+    <tbody>
+      <tr>
+        <td colspan="4"><span style="color:var(--muted)">Saldo awal bulan (${monthLabel(currentMonth)})</span></td>
+        <td style="white-space:nowrap;text-align:right"><strong>${fmtRp(opening)}</strong></td>
+      </tr>
+      ${rows.map(r => `<tr>
+        <td style="white-space:nowrap">${fmtTanggalID(r.date)}</td>
+        <td>${r.ket}</td>
+        <td style="white-space:nowrap;text-align:right;color:var(--green)">${r.masuk ? fmtRp(r.masuk) : '–'}</td>
+        <td style="white-space:nowrap;text-align:right;color:var(--red)">${r.keluar ? fmtRp(r.keluar) : '–'}</td>
+        <td style="white-space:nowrap;text-align:right"><strong>${fmtRp(r.saldo)}</strong></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
 // ===== 8b. JURNAL UMUM (pembukuan baku: tiap transaksi = Debit + Kredit) =====
 function journalEntry(t) {
   if ((t.status || 'open') === 'cancelled') return null;
@@ -1430,6 +1477,7 @@ function buildJournal(tx) {
 }
 
 function renderJournal(tx) {
+  renderCashFlow(tx);
   const box = document.getElementById('journalTable');
   if (!box) return;
   const rows = buildJournal(tx);
@@ -1471,11 +1519,24 @@ document.getElementById('btnExportExcel')?.addEventListener('click', () => {
     return;
   }
   const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
-  const rows = buildJournal(monthTx);
-  if (!rows.length) {
+  const { opening, rows: cf } = cashFlowRows(monthTx);
+  if (!cf.length && !buildJournal(monthTx).length) {
     alert('Tidak ada data bulan ini untuk diekspor.');
     return;
   }
+  // Sheet 1 (utama): LAPORAN bahasa pemilik usaha + saldo berjalan.
+  const lap = [{ No: '', Tanggal: '', Keterangan: `Saldo awal ${monthLabel(currentMonth)}`, Masuk: '', Keluar: '', Saldo: opening }];
+  cf.forEach((r, i) => lap.push({
+    No: i + 1, Tanggal: r.date, Keterangan: r.ket,
+    Masuk: r.masuk || '', Keluar: r.keluar || '', Saldo: r.saldo
+  }));
+  const wsLap = window.XLSX.utils.json_to_sheet(lap, {
+    header: ['No', 'Tanggal', 'Keterangan', 'Masuk', 'Keluar', 'Saldo']
+  });
+  wsLap['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 42 }, { wch: 16 }, { wch: 16 }, { wch: 18 }];
+
+  // Sheet 2: JURNAL (untuk akuntan/audit).
+  const rows = buildJournal(monthTx);
   const jdata = rows.map((r, i) => ({
     No: i + 1, Tanggal: r.date, Keterangan: r.ket,
     'Akun Debit': r.debit, 'Akun Kredit': r.kredit,
@@ -1500,9 +1561,10 @@ document.getElementById('btnExportExcel')?.addEventListener('click', () => {
   ws2['!cols'] = [{ wch: 28 }, { wch: 24 }];
 
   const wb = window.XLSX.utils.book_new();
+  window.XLSX.utils.book_append_sheet(wb, wsLap, 'Laporan');
   window.XLSX.utils.book_append_sheet(wb, ws, 'Jurnal Umum');
   window.XLSX.utils.book_append_sheet(wb, ws2, 'Ringkasan');
-  window.XLSX.writeFile(wb, `gwcatat-jurnal-${currentMonth}.xlsx`);
+  window.XLSX.writeFile(wb, `gwcatat-laporan-${currentMonth}.xlsx`);
 });
 
 document.getElementById('btnPrintReport')?.addEventListener('click', () => window.print());

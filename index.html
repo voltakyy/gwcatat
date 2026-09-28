@@ -764,17 +764,30 @@
         <div class="card-title">
           <div class="card-title-left">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h10"/></svg>
+            <span>Rincian Arus Kas</span>
+          </div>
+        </div>
+        <p style="font-size:12.5px;line-height:1.6;color:var(--text);margin-bottom:12px">Daftar keluar-masuk uang bulan ini dalam bahasa sehari-hari:
+        <strong style="color:var(--green)">Masuk</strong>, <strong style="color:var(--red)">Keluar</strong>, dan
+        <strong style="color:var(--teal)">Saldo</strong> berjalan. Untuk pemilik usaha, tabel ini + tombol
+        <strong>Ekspor Excel</strong> di atas sudah cukup.</p>
+        <div id="cashFlowTable"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h10"/></svg>
             <span>Jurnal Umum (Pembukuan Baku)</span>
           </div>
           <span id="journalBalance" style="font-size:11px;font-weight:700;white-space:nowrap"></span>
         </div>
         <div class="journal-intro">
-          <p><strong>Apa ini?</strong> Catatan pembukuan baku: setiap transaksi ditulis dua sisi —
-          <strong>Debit</strong> (uang datang dari mana) dan <strong>Kredit</strong> (uang pergi ke mana) —
-          sehingga total keduanya selalu sama (<strong>✓ Seimbang</strong>).</p>
-          <p style="margin-top:6px"><strong>Buat apa?</strong> Bukti rapi untuk audit, pengajuan modal usaha/UMKM,
-          dan arsip cetak. Gunakan tombol <strong>Ekspor Excel</strong> atau <strong>Cetak / PDF</strong> di atas
-          untuk membawanya keluar aplikasi.</p>
+          <p><strong>Untuk siapa?</strong> Bagian ini untuk <strong>akuntan/audit</strong> — bukan untuk dibaca harian.
+          Kalau Anda pemilik usaha, cukup pakai tabel <strong>Rincian Arus Kas</strong> di atas.</p>
+          <p style="margin-top:6px"><strong>Isinya apa?</strong> Tiap transaksi ditulis dua sisi pembukuan
+          (<strong>Debit</strong> dan <strong>Kredit</strong>) supaya totalnya selalu sama
+          (<strong>✓ Seimbang</strong>) — syarat laporan resmi dan pengajuan modal UMKM.</p>
           <p class="journal-map">Kas ↔ Pendapatan · Beban ↔ Kas · Tabungan/Darurat ↔ Kas · Piutang ↔ Pendapatan · Beban ↔ Utang</p>
         </div>
         <div id="journalTable"></div>
