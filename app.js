@@ -136,6 +136,20 @@ function parseRibuan(v) {
   return parseInt(v.replace(/[^0-9]/g, '') || '0', 10);
 }
 
+// Umur tagihan dalam hari (untuk piutang/utang): "hari ini",
+// "kemarin", atau "N hari lalu". Tanggal depan: "N hari lagi".
+function relAge(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length < 3 || parts.some(isNaN)) return '';
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  const now = new Date();
+  const diff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - d) / 86400000);
+  if (diff <= 0) return diff === 0 ? 'hari ini' : `${Math.abs(diff)} hari lagi`;
+  if (diff === 1) return 'kemarin';
+  return `${diff} hari lalu`;
+}
+
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
@@ -580,13 +594,16 @@ function txItemHTML(t) {
   const settleBtn = (isPiutang || isUtang)
     ? `<button class="tx-settle" data-id="${t.id}" title="${isPiutang ? 'Tandai sudah diterima (masuk kas)' : 'Tandai sudah dibayar (keluar kas)'}">${isPiutang ? '✓ Diterima' : '✓ Dibayar'}</button>`
     : '';
+  const ageHint = (isPiutang || isUtang)
+    ? ` · <span style="font-weight:700;color:${(relAge(t.date) || '').includes('lagi') ? 'var(--muted)' : (isPiutang ? 'var(--green)' : 'var(--red)')}">${relAge(t.date)}</span>`
+    : '';
 
   return `
   <div class="tx-item">
     <div class="tx-icon ${iconClass}">${iconSymbol}</div>
     <div class="tx-info">
       <div class="tx-desc">${t.description || (isIn ? 'Pendapatan' : (isPiutang ? 'Piutang' : (isUtang ? 'Utang' : 'Pengeluaran')))}</div>
-      <div class="tx-date">${t.date} · <span style="font-weight:600">${catLabel}</span></div>
+      <div class="tx-date">${t.date} · <span style="font-weight:600">${catLabel}</span>${ageHint}</div>
     </div>
     <span class="tx-amount ${amountClass}">${amountPrefix}${fmtRp(t.amount)}</span>
     ${settleBtn}
@@ -666,6 +683,10 @@ function renderPiutangList(tx) {
   const list = document.getElementById('piutangList');
   if (!list) return;
   const items = tx.filter(t => t.type === 'piutang').sort((a, b) => b.date.localeCompare(a.date));
+  const countEl = document.getElementById('piutangCount');
+  if (countEl) countEl.textContent = items.length
+    ? `${items.length} terbuka · ${fmtRp(items.reduce((s, t) => s + Number(t.amount), 0))}`
+    : '';
   if (!items.length) {
     list.innerHTML = '<div class="empty-state">Tidak ada piutang. Semua sudah diterima!</div>';
     return;
@@ -678,6 +699,10 @@ function renderUtangList(tx) {
   const list = document.getElementById('utangList');
   if (!list) return;
   const items = tx.filter(t => t.type === 'utang').sort((a, b) => b.date.localeCompare(a.date));
+  const countEl = document.getElementById('utangCount');
+  if (countEl) countEl.textContent = items.length
+    ? `${items.length} terbuka · ${fmtRp(items.reduce((s, t) => s + Number(t.amount), 0))}`
+    : '';
   if (!items.length) {
     list.innerHTML = '<div class="empty-state">Tidak ada utang. Bersih!</div>';
     return;

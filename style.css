@@ -1293,6 +1293,13 @@ body {
   }
   .tx-amount { font-size: 14px; white-space: nowrap; }
   .tx-del { flex-shrink: 0; }
+  /* Baris utang–piutang: tombol lunasi jadi baris penuh ramah jempol */
+  .tx-item { flex-wrap: wrap; row-gap: 8px; }
+  .tx-settle {
+    flex: 1 1 100%;
+    padding: 10px;
+    font-size: 12.5px;
+  }
 
   /* ---- Kalender mobile: titik ganti nominal, sel lebih ramping ---- */
   .calendar-grid { gap: 2px; }
