@@ -874,6 +874,24 @@ body {
   font-size: 11px;
   font-weight: 800;
 }
+
+/* ---- CETAK LAPORAN (PDF via dialog cetak browser) ---- */
+@media print {
+  .app-sidebar,
+  .sidebar-backdrop,
+  .mobile-menu-btn,
+  .no-print,
+  .modal-overlay,
+  #tutFrame,
+  #tutTip {
+    display: none !important;
+  }
+  .app-layout { display: block; }
+  .app-main { padding: 0; }
+  body { background: #fff; }
+  .card { box-shadow: none; break-inside: avoid; }
+  .chart-wrap { break-inside: avoid; }
+}
 .empty-state {
   font-size: 13px;
   color: var(--muted);

@@ -6,6 +6,7 @@
   <title>gwcatat — Catatan & Manajemen Keuangan Pribadi</title>
   <meta name="description" content="Aplikasi pencatatan keuangan pribadi dengan indikator kesehatan finansial dan manajemen tabungan cerdas." />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="supabase-client.js"></script>
   <script>
     // Penjaga awal: alihkan ke login bila tidak ada sesi Supabase.
@@ -718,9 +719,19 @@
           <h2 class="section-title">Laporan Keuangan & Statistik</h2>
           <p style="font-size:12px;color:var(--muted);margin-top:2px">Rekapitulasi lengkap performa kas dan evaluasi keuangan berkala.</p>
         </div>
+        <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnExportExcel" class="btn-income" style="padding:9px 18px;font-size:13px" title="Unduh laporan sebagai file Excel">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+            Ekspor Excel
+          </button>
+          <button id="btnPrintReport" class="btn-savings" style="padding:9px 18px;font-size:13px" title="Cetak laporan / simpan sebagai PDF">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Cetak / PDF
+          </button>
+        </div>
       </div>
 
-      <div class="filter-row">
+      <div class="filter-row no-print">
         <label for="reportPeriod">Periode Filter</label>
         <select id="reportPeriod">
           <option value="minggu">Mingguan</option>
@@ -747,6 +758,17 @@
           </div>
         </div>
         <div class="chart-wrap" style="height:260px"><canvas id="reportChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h10"/></svg>
+            <span>Jurnal Umum (Pembukuan Baku)</span>
+          </div>
+          <span id="journalBalance" style="font-size:11px;font-weight:700;white-space:nowrap"></span>
+        </div>
+        <div id="journalTable"></div>
       </div>
     </div><!-- /tab-laporan -->
 

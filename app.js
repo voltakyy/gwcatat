@@ -1394,9 +1394,118 @@ function updateReport(tx) {
         });
       }
     }
+    renderJournal(tx);
   } catch (e) {
-    console.error("Error updating report:", e);
+    console.error("Error updating report:", err);
   }
+}
+
+// ===== 8b. JURNAL UMUM (pembukuan baku: tiap transaksi = Debit + Kredit) =====
+function journalEntry(t) {
+  if ((t.status || 'open') === 'cancelled') return null;
+  const amt = Number(t.amount) || 0;
+  if (!amt) return null;
+  const catLabel = getCategoryLabel(t.category);
+  const pihak = t.counterparty ? ` — ${t.counterparty}` : '';
+  const ket = `${t.description || catLabel}${pihak}`;
+  if (t.type === 'in') return { ket, debit: 'Kas', kredit: `Pendapatan — ${catLabel}` };
+  if (t.type === 'out') {
+    const p = getPillar(t.category);
+    const debit = p === 'tabungan' ? 'Tabungan Masa Depan'
+      : p === 'darurat' ? 'Dana Darurat'
+      : `Beban — ${catLabel}`;
+    return { ket, debit, kredit: 'Kas' };
+  }
+  if (t.type === 'piutang') return { ket, debit: 'Piutang', kredit: `Pendapatan — ${catLabel}` };
+  if (t.type === 'utang') return { ket, debit: `Beban — ${catLabel}`, kredit: 'Utang' };
+  return null;
+}
+
+function buildJournal(tx) {
+  return tx
+    .filter(t => t.date)
+    .map(t => { const e = journalEntry(t); return e ? { date: t.date, ...e, amount: Number(t.amount) || 0 } : null; })
+    .filter(Boolean)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderJournal(tx) {
+  const box = document.getElementById('journalTable');
+  if (!box) return;
+  const rows = buildJournal(tx);
+  const balEl = document.getElementById('journalBalance');
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty-state">Belum ada entri jurnal bulan ini.</div>';
+    if (balEl) balEl.textContent = '';
+    return;
+  }
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  box.innerHTML = `<div class="table-scroll"><table class="debt-table">
+    <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Akun Debit</th><th>Akun Kredit</th><th style="text-align:right">Debit</th><th style="text-align:right">Kredit</th></tr></thead>
+    <tbody>
+      ${rows.map(r => `<tr>
+        <td style="white-space:nowrap">${fmtTanggalID(r.date)}</td>
+        <td>${r.ket}</td>
+        <td>${r.debit}</td>
+        <td>${r.kredit}</td>
+        <td style="white-space:nowrap;text-align:right">${fmtRp(r.amount)}</td>
+        <td style="white-space:nowrap;text-align:right">${fmtRp(r.amount)}</td>
+      </tr>`).join('')}
+      <tr>
+        <td colspan="4" style="text-align:right"><strong>Total</strong></td>
+        <td style="white-space:nowrap;text-align:right"><strong>${fmtRp(total)}</strong></td>
+        <td style="white-space:nowrap;text-align:right"><strong>${fmtRp(total)}</strong></td>
+      </tr>
+    </tbody>
+  </table></div>`;
+  if (balEl) {
+    balEl.textContent = '✓ Seimbang';
+    balEl.style.color = 'var(--green)';
+  }
+}
+
+// ===== 8c. EKSPOR EXCEL + CETAK/PDF LAPORAN =====
+document.getElementById('btnExportExcel')?.addEventListener('click', () => {
+  if (!window.XLSX) {
+    alert('Pustaka Excel belum termuat. Periksa koneksi internet lalu coba lagi.');
+    return;
+  }
+  const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
+  const rows = buildJournal(monthTx);
+  if (!rows.length) {
+    alert('Tidak ada data bulan ini untuk diekspor.');
+    return;
+  }
+  const jdata = rows.map((r, i) => ({
+    No: i + 1, Tanggal: r.date, Keterangan: r.ket,
+    'Akun Debit': r.debit, 'Akun Kredit': r.kredit,
+    Debit: r.amount, Kredit: r.amount
+  }));
+  const ws = window.XLSX.utils.json_to_sheet(jdata, {
+    header: ['No', 'Tanggal', 'Keterangan', 'Akun Debit', 'Akun Kredit', 'Debit', 'Kredit']
+  });
+  ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 40 }, { wch: 26 }, { wch: 26 }, { wch: 16 }, { wch: 16 }];
+
+  const totalIn = monthTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
+  const totalOut = monthTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
+  const ws2 = window.XLSX.utils.aoa_to_sheet([
+    ['LAPORAN GWCATAT', monthLabel(currentMonth)],
+    [],
+    ['Total Pendapatan', totalIn],
+    ['Total Pengeluaran', totalOut],
+    ['Selisih Kas', totalIn - totalOut],
+    ['Total Transaksi', monthTx.length],
+    ['Total Jurnal (Debit = Kredit)', rows.reduce((s, r) => s + r.amount, 0)]
+  ]);
+  ws2['!cols'] = [{ wch: 28 }, { wch: 24 }];
+
+  const wb = window.XLSX.utils.book_new();
+  window.XLSX.utils.book_append_sheet(wb, ws, 'Jurnal Umum');
+  window.XLSX.utils.book_append_sheet(wb, ws2, 'Ringkasan');
+  window.XLSX.writeFile(wb, `gwcatat-jurnal-${currentMonth}.xlsx`);
+});
+
+document.getElementById('btnPrintReport')?.addEventListener('click', () => window.print());
 }
 
 // ===== 9. NAVIGASI 5 HALAMAN =====
