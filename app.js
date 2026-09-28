@@ -1304,6 +1304,30 @@ document.querySelectorAll('.nav-item').forEach(btn => {
   });
 });
 
+// Kategori sidebar lipat (▼): status tersimpan antar sesi.
+const NAV_COLLAPSED_KEY = 'gwcatat_nav_collapsed';
+function applyNavCollapsed() {
+  let collapsed = [];
+  try { collapsed = JSON.parse(localStorage.getItem(NAV_COLLAPSED_KEY) || '[]'); } catch (e) {}
+  document.querySelectorAll('.nav-group').forEach(g => {
+    g.classList.toggle('collapsed', collapsed.includes(g.dataset.group));
+  });
+}
+document.querySelectorAll('.nav-group-head').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = btn.closest('.nav-group');
+    if (!g) return;
+    g.classList.toggle('collapsed');
+    let collapsed = [];
+    try { collapsed = JSON.parse(localStorage.getItem(NAV_COLLAPSED_KEY) || '[]'); } catch (e) {}
+    const id = g.dataset.group;
+    collapsed = g.classList.contains('collapsed')
+      ? [...new Set([...collapsed, id])]
+      : collapsed.filter(x => x !== id);
+    try { localStorage.setItem(NAV_COLLAPSED_KEY, JSON.stringify(collapsed)); } catch (e) {}
+  });
+});
+
 // Mobile Sidebar Drawer
 const appSidebar = document.getElementById('appSidebar');
 const sidebarBackdrop = document.getElementById('sidebarBackdrop');
@@ -1609,6 +1633,7 @@ if (document.getElementById('reportDate')) {
 
 // ===== 17. INIT =====
 function init() {
+  applyNavCollapsed();
   renderAll();
 
   const healthCloseBtn = document.getElementById('healthModalClose');
