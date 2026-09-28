@@ -1268,7 +1268,8 @@ const PAGE_TITLES = {
   pengeluaran: 'Pengeluaran & Belanja',
   tabungan:    'Manajemen Tabungan & Masa Depan',
   laporan:     'Laporan Keuangan & Statistik',
-  panduan:     'Panduan Interaktif'
+  panduan:     'Panduan Interaktif',
+  hutangpiutang: 'Hutang-Piutang'
 };
 
 function switchTab(tabName) {
@@ -1525,6 +1526,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === '4') { e.preventDefault(); switchTab('tabungan'); return; }
     if (e.key === '5') { e.preventDefault(); switchTab('laporan'); return; }
     if (e.key === '6') { e.preventDefault(); switchTab('panduan'); return; }
+    if (e.key === '7') { e.preventDefault(); switchTab('hutangpiutang'); return; }
     if (e.key.toLowerCase() === 'i') { e.preventDefault(); openModal('in'); return; }
     if (e.key.toLowerCase() === 'e') { e.preventDefault(); openModal('out'); return; }
     if (e.key.toLowerCase() === 's') { e.preventDefault(); openModal('out', 'tabungan'); return; }
@@ -1728,8 +1730,8 @@ const TUT_SESSIONS = {
   utangpiutang: {
     num: 7, name: 'Utang & Piutang',
     steps: [
-      { tab: 'pendapatan', sel: '#btnPiutangTab', title: 'Tombol Catat Piutang', text: 'Klik tombol ini saat ada uang yang akan kamu terima nanti (mis. teman berutang padamu). Nominalnya belum masuk kas.' },
-      { tab: 'pendapatan', sel: '#piutangCard', title: 'Daftar Belum Diterima', text: 'Semua piutang yang masih terbuka tampil di sini. Saat uangnya benar-benar diterima, klik tombol ✓ Diterima agar pindah ke kas. Utang bekerja sebaliknya di halaman Pengeluaran.' }
+      { tab: 'hutangpiutang', sel: '#btnPiutangTab', title: 'Tombol Catat Piutang', text: 'Klik tombol ini saat ada uang yang akan kamu terima nanti (mis. teman berutang padamu). Nominalnya belum masuk kas.' },
+      { tab: 'hutangpiutang', sel: '#piutangCard', title: 'Daftar Belum Diterima', text: 'Semua piutang yang masih terbuka tampil di sini. Saat uangnya benar-benar diterima, klik tombol ✓ Diterima agar pindah ke kas. Utang bekerja sebaliknya di kartu bawahnya.' }
     ]
   },
   laporan: {
