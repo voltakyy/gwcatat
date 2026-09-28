@@ -1506,7 +1506,6 @@ document.getElementById('btnExportExcel')?.addEventListener('click', () => {
 });
 
 document.getElementById('btnPrintReport')?.addEventListener('click', () => window.print());
-}
 
 // ===== 9. NAVIGASI 5 HALAMAN =====
 const PAGE_TITLES = {
